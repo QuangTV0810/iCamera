@@ -1,118 +1,87 @@
 #include <iostream>
-#include <thread>
 #include <chrono>
-#include "utils/aiotek_log.hpp"
-#include "common/aiotek_timer.hpp"
-#include "module/network/mqtt/aiotek_mqtt.hpp"
+#include "aiotek_mailbox.hpp"
+#include "aiotek_mqtt.hpp"
+#include "aiotek_net_managers.hpp"
+#include "aiotek_mqtt_task.hpp"
 
 namespace AIOTEK {
 
-class MQTTTask {
-private:
-    bool running;
-    std::thread taskThread;
-    Timer timer;
-    MQTTManager mqttManager;
+MQTTTask::MQTTTask(int id) : Task("MQTT", id)
+{
+}
 
-public:
-    MQTTTask() : running(false) {}
-    
-    ~MQTTTask() {
-        stop();
-    }
-    
-    bool start() {
-        if (running) return true;
-        
-        AIOTEK_LOG_INFO("MQTTTask: Starting");
-        
-        MQTTManager::MQTTConfig config;
-        config.broker = "broker.hivemq.com";
-        config.port = 1883;
-        config.clientId = "iCamera_";
-        config.topic = "icamera/status";
-        config.ssl = false;
-        
-        mqttManager.setConfig(config);
-        
-        mqttManager.onConnect([]() {
-            AIOTEK_LOG_INFO("MQTTTask: Connected to broker");
-        });
-        
-        mqttManager.onDisconnect([]() {
-            AIOTEK_LOG_INFO("MQTTTask: Disconnected from broker");
-        });
-        
-        mqttManager.onError([](const std::string& error) {
-            AIOTEK_LOG_ERROR("MQTTTask: Error: " + error);
-        });
-        
-        mqttManager.onMessage([](const std::string& topic, const std::string& payload) {
-            AIOTEK_LOG_INFO("MQTTTask: Received message on " + topic + ": " + payload);
-        });
-        
-        running = true;
-        taskThread = std::thread(&MQTTTask::run, this);
-        return true;
-    }
-    
-    void stop() {
-        if (!running) return;
-        
-        AIOTEK_LOG_INFO("MQTTTask: Stopping");
-        running = false;
-        
-        if (taskThread.joinable()) {
-            taskThread.join();
-        }
-        
-        mqttManager.disconnect();
-    }
-    
-    bool isRunning() const {
-        return running;
-    }
+MQTTTask::~MQTTTask()
+{
+    stop();
+}
 
-private:
-    void run() {
-        AIOTEK_LOG_INFO("MQTTTask: Thread started");
-        timer.start();
-        
-        if (mqttManager.connect() != 0) {
-            AIOTEK_LOG_ERROR("MQTTTask: Failed to connect to MQTT broker");
-            return;
-        }
+void MQTTTask::start()
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if (m_running)
+        return;
 
-        mqttManager.subscribe("icamera/command");
-        mqttManager.subscribe("icamera/config");
-        
-        while (running) {
-            sendStatusUpdate();
-            std::this_thread::sleep_for(std::chrono::seconds(5));
+    m_client = std::make_unique<MQTTManager>();
+    m_client->onConnect([&]() {
+        MQTTManager::MQTTConfig config = m_client->getConfig();
+        std::cout << "Connected to ThingBoard broker!" << std::endl;
+        std::cout << "Device Token: " << config.username << std::endl;
+        std::cout << "Broker: " << config.broker << ":" << config.port << " (SSL/TLS)" << std::endl;
+
+        std::string msg = "hello";
+        AIOTEK::g_mailbox.send({AIOTEK::TaskID::MQTT, AIOTEK::TaskID::MQTT, MailboxMessage{1, msg, msg.length()}});
+    });
+
+    m_client->onDisconnect([]() { std::cout << "Disconnected from ThingBoard broker!" << std::endl; });
+
+    m_client->onMessage([](const std::string& topic, const nlohmann::json& data) {
+        std::cout << "Received on topic '" << topic << "': " << data.dump(2) << std::endl;
+    });
+
+    m_client->onError([](const std::string& error) { std::cout << "Error: " << error << std::endl; });
+
+    m_client->connect();
+
+    m_running = true;
+    m_thread = std::thread(&MQTTTask::threadFunc, this);
+    AIOTEK_LOG_INFO("MQTTTask: Started");
+}
+
+void MQTTTask::stop()
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if (!m_running)
+        return;
+    m_running = false;
+    if (m_thread.joinable())
+        m_thread.join();
+    AIOTEK_LOG_INFO("MQTTTask: Stopped");
+}
+
+bool MQTTTask::state() const
+{
+    return m_running;
+}
+
+void MQTTTask::threadFunc()
+{
+    AIOTEK_LOG_INFO("MQTTTask: Thread running");
+    while (m_running) {
+        AIOTEK::MailboxPacket packet = AIOTEK::g_mailbox.receive();
+        if (packet.receiver == AIOTEK::TaskID::MQTT) {
+            std::cout << "[MQTTTask] From: " << AIOTEK::TaskIDToString(packet.sender) << " To: " << AIOTEK::TaskIDToString(packet.receiver) << std::endl;
+            switch (packet.msg.signal) {
+                case 1:
+                    if (!packet.msg.msg.empty())
+                        std::cout << "Msg: " << packet.msg.msg << std::endl;
+                    break;
+                default:
+                    break;
+            }
         }
-        
-        mqttManager.disconnect();
-        
-        timer.stop();
-        AIOTEK_LOG_INFO("MQTTTask: Thread stopped after " + timer.getElapsedString());
     }
-    
-    void sendStatusUpdate() {
-        static int counter = 0;
-        nlohmann::json status;
-        status["timestamp"] = std::chrono::duration_cast<std::chrono::seconds>(
-            std::chrono::system_clock::now().time_since_epoch()).count();
-        status["uptime"] = timer.getElapsedSeconds();
-        status["counter"] = ++counter;
-        status["status"] = "running";
-        
-        std::string topic = "icamera/status";
-        if (mqttManager.publish(topic, status) == 0) {
-            AIOTEK_LOG_DEBUG("MQTTTask: Sent status update");
-        } else {
-            AIOTEK_LOG_ERROR("MQTTTask: Failed to send status update");
-        }
-    }
-};
+    AIOTEK_LOG_INFO("MQTTTask: Thread exiting");
+}
 
 } // namespace AIOTEK

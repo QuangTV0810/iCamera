@@ -17,7 +17,7 @@ iCamera is a modular camera system designed for embedded applications, featuring
 │  ├── Global Shutdown Management                             │
 │  └── Application Lifecycle                                  │
 ├─────────────────────────────────────────────────────────────┤
-│  Task Management Layer (ManagersTask)                       │
+│  Task Management Layer (TaskManagers)                       │
 │  ├── Task Scheduler                                         │
 │  ├── Thread Management                                      │
 │  ├── Graceful Shutdown Control                              │
@@ -49,7 +49,7 @@ iCamera is a modular camera system designed for embedded applications, featuring
 
 ### 1. Task Management System
 
-#### ManagersTask Class
+#### TaskManagers Class
 - **Purpose**: Central task coordinator and thread manager
 - **Responsibilities**:
   - Task lifecycle management
@@ -68,7 +68,7 @@ struct TaskEntry {
 
 #### Task Registration
 ```cpp
-// In ManagersTask constructor
+// In TaskManagers constructor
 tasks.push_back({"Sender", task_sender});
 tasks.push_back({"Receiver", task_receiver});
 // Future tasks can be added here
@@ -121,16 +121,16 @@ struct MailboxEnvelope {
 ```mermaid
 sequenceDiagram
     participant Main
-    participant ManagersTask
+    participant TaskManagers
     participant SenderTask
     participant ReceiverTask
     participant Mailbox
 
-    Main->>ManagersTask: Create instance
-    Main->>ManagersTask: start()
-    ManagersTask->>SenderTask: Create thread
-    ManagersTask->>ReceiverTask: Create thread
-    ManagersTask->>Mailbox: Initialize
+    Main->>TaskManagers: Create instance
+    Main->>TaskManagers: start()
+    TaskManagers->>SenderTask: Create thread
+    TaskManagers->>ReceiverTask: Create thread
+    TaskManagers->>Mailbox: Initialize
     Note over SenderTask,ReceiverTask: Tasks start running
     Main->>Main: Enter main loop
 ```
@@ -157,25 +157,25 @@ sequenceDiagram
 sequenceDiagram
     participant Signal
     participant Main
-    participant ManagersTask
+    participant TaskManagers
     participant SenderTask
     participant ReceiverTask
 
     Signal->>Main: SIGINT/SIGTERM
-    Main->>ManagersTask: stop()
-    ManagersTask->>SenderTask: Join thread
-    ManagersTask->>ReceiverTask: Join thread
-    ManagersTask->>Main: Shutdown complete
+    Main->>TaskManagers: stop()
+    TaskManagers->>SenderTask: Join thread
+    TaskManagers->>ReceiverTask: Join thread
+    TaskManagers->>Main: Shutdown complete
     Main->>Main: Exit application
 ```
 
 ## Thread Management
 
 ### Thread Lifecycle
-1. **Creation**: Threads created in `ManagersTask::start()`
+1. **Creation**: Threads created in `TaskManagers::start()`
 2. **Execution**: Each task runs in its own thread
 3. **Synchronization**: Mailbox provides thread-safe communication
-4. **Cleanup**: Threads joined in `ManagersTask::stop()`
+4. **Cleanup**: Threads joined in `TaskManagers::stop()`
 
 ### Thread Safety
 - **Mailbox**: Protected by mutex and condition variables
@@ -202,7 +202,7 @@ sequenceDiagram
 - **Debug/Release**: Different optimization levels
 
 ### Runtime Configuration
-- **Task Parameters**: Configurable via ManagersTask
+- **Task Parameters**: Configurable via TaskManagers
 - **Hardware Settings**: Device-specific configurations
 - **Network Settings**: MQTT broker configuration
 
@@ -210,7 +210,7 @@ sequenceDiagram
 
 ### Adding New Tasks
 1. Define task function
-2. Add to ManagersTask constructor
+2. Add to TaskManagers constructor
 3. Implement message handling if needed
 4. Update documentation
 

@@ -8,10 +8,9 @@
 #include <unordered_map>
 #include "aiotek_net_if.hpp"
 
+namespace AIOTEK_NetworkManagers {
 extern std::unordered_map<std::string, std::unique_ptr<AIOTEK_NetworkInterface>> managers;
 extern std::mutex managers_mutex;
-
-namespace AIOTEK_NetworkManagers {
 class NetworkManagers {
   private:
   public:

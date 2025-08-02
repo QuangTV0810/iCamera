@@ -57,42 +57,29 @@ inline void PrintAllTaskIDs()
     std::cout << static_cast<int>(TaskID::MQTT) << ": " << TaskIDToString(TaskID::MQTT) << std::endl;
 }
 
-enum class EventType { None, Signal, Shutdown, Error, Custom };
-
-struct SignalEvent {
-    int signal;
+struct MailboxMessage {
+    std::int32_t signal;
+    std::string msg;
+    std::uint64_t len;
 };
 
-struct ErrorEvent {
-    int code;
-    std::string message;
-};
-
-struct CustomEvent {
-    std::string name;
-    std::string payload;
-};
-
-using MailboxMessage = std::variant<SignalEvent, ErrorEvent, CustomEvent, std::string, int>;
-
-struct MailboxEnvelope {
+struct MailboxPacket {
     TaskID sender;
     TaskID receiver;
-    MailboxMessage payload;
+    MailboxMessage msg;
 };
 
 class Mailbox {
   public:
-    void send(const MailboxEnvelope& env);
-    MailboxEnvelope receive();
-    std::optional<MailboxEnvelope> try_receive();
+    void send(const MailboxPacket& env);
+    MailboxPacket receive();
+    std::optional<MailboxPacket> try_receive();
 
   private:
-    std::queue<MailboxEnvelope> queue_;
-    std::mutex mutex_;
-    std::condition_variable cond_;
+    std::queue<MailboxPacket> m_queue;
+    std::mutex m_mutex;
+    std::condition_variable m_cond;
 };
 
 extern Mailbox g_mailbox;
-
 } // namespace AIOTEK

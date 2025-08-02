@@ -4,7 +4,7 @@
 
 ### Core Classes
 
-#### ManagersTask
+#### TaskManagers
 
 **Header**: `source/app/aiotek_managers_task.hpp`
 
@@ -12,13 +12,13 @@
 
 **Constructor**:
 ```cpp
-ManagersTask();
+TaskManagers();
 ```
-Creates a new ManagersTask instance and registers default tasks (Sender, Receiver).
+Creates a new TaskManagers instance and registers default tasks (Sender, Receiver).
 
 **Destructor**:
 ```cpp
-~ManagersTask();
+~TaskManagers();
 ```
 Automatically stops all tasks and joins threads.
 
@@ -38,7 +38,7 @@ Stops all tasks and joins their threads.
 - **Thread Safety**: Not thread-safe
 
 ```cpp
-bool isRunning() const;
+bool state() const;
 ```
 Checks if the task manager is currently running.
 - **Returns**: `true` if running, `false` otherwise
@@ -58,9 +58,9 @@ Internal method for processing manager operations.
 
 **Global Instance**:
 ```cpp
-extern ManagersTask managers;
+extern TaskManagers managers;
 ```
-Global instance of ManagersTask accessible throughout the application.
+Global instance of TaskManagers accessible throughout the application.
 
 ---
 
@@ -474,7 +474,7 @@ Common error codes:
 - `Timer` - Methods are not thread-safe (use per-thread instances)
 
 #### Thread-Unsafe Components
-- `ManagersTask` - Public methods are not thread-safe
+- `TaskManagers` - Public methods are not thread-safe
 - Task functions - Run in dedicated threads
 - Hardware managers - Use per-instance
 

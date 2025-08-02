@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 project(iCamera VERSION 1.0.0 LANGUAGES CXX C)
 
 # Build option: native or cross
-option(CROSS_COMPILE "Enable cross-compilation for ARM" OFF)
+option(CROSS_COMPILE "Enable cross-compilation for ARM" ON)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
@@ -59,7 +59,11 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 # Compiler flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -fPIC")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -fPIC")
-
+set(CMAKE_THREAD_LIBS_INIT "-lpthread")
+set(CMAKE_HAVE_THREADS_LIBRARY 1)
+set(CMAKE_USE_WIN32_THREADS_INIT 0)
+set(CMAKE_USE_PTHREADS_INIT 1)
+set(THREADS_PREFER_PTHREAD_FLAG ON)
 # Debug flags
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0 -DDEBUG")
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g -O0 -DDEBUG")

@@ -58,7 +58,7 @@ public:
         videoManager.shutdown();
     }
     
-    bool isRunning() const {
+    bool state() const {
         return running;
     }
 

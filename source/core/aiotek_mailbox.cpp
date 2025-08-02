@@ -2,29 +2,29 @@
 
 namespace AIOTEK {
 
-void Mailbox::send(const MailboxEnvelope& env)
+void Mailbox::send(const MailboxPacket& env)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-    queue_.push(env);
-    cond_.notify_one();
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_queue.push(env);
+    m_cond.notify_one();
 }
 
-MailboxEnvelope Mailbox::receive()
+MailboxPacket Mailbox::receive()
 {
-    std::unique_lock<std::mutex> lock(mutex_);
-    cond_.wait(lock, [this] { return !queue_.empty(); });
-    auto env = queue_.front();
-    queue_.pop();
+    std::unique_lock<std::mutex> lock(m_mutex);
+    m_cond.wait(lock, [this] { return !m_queue.empty(); });
+    auto env = m_queue.front();
+    m_queue.pop();
     return env;
 }
 
-std::optional<MailboxEnvelope> Mailbox::try_receive()
+std::optional<MailboxPacket> Mailbox::try_receive()
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (queue_.empty())
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if (m_queue.empty())
         return std::nullopt;
-    auto env = queue_.front();
-    queue_.pop();
+    auto env = m_queue.front();
+    m_queue.pop();
     return env;
 }
 

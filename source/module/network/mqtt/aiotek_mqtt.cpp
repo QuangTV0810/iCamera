@@ -275,7 +275,11 @@ class MQTTImplement {
 
     bool isConnected() const
     {
-        return m_state.load() == MQTTManager::State::Connected;
+        if (m_state.load() == MQTTManager::State::Connected) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     MQTTManager::State getState() const

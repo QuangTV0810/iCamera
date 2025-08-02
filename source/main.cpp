@@ -7,7 +7,8 @@
 #include "aiotek_timer.hpp"
 #include "aiotek_net_if.hpp"
 #include "aiotek_mqtt.hpp"
-#include "aiotek_managers_task.hpp"
+#include "aiotek_task.hpp"
+#include "aiotek_console.hpp"
 
 volatile bool g_running = true;
 
@@ -15,7 +16,7 @@ void signal_handler(int signal)
 {
     std::cout << "Received signal " << signal << ", shutting down..." << std::endl;
     g_running = false;
-    AIOTEK::g_shutdown_requested = true;
+    g_shutdown_requested = true;
 }
 
 int main()

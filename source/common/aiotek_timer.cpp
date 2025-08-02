@@ -4,45 +4,45 @@
 
 namespace AIOTEK {
 
-Timer::Timer() : isRunning(false) {
+Timer::Timer() : state(false) {
 }
 
 void Timer::start() {
     startTime = std::chrono::high_resolution_clock::now();
-    isRunning = true;
+    state = true;
 }
 
 void Timer::stop() {
-    if (isRunning) {
+    if (state) {
         endTime = std::chrono::high_resolution_clock::now();
-        isRunning = false;
+        state = false;
     }
 }
 
 void Timer::reset() {
-    isRunning = false;
+    state = false;
 }
 
 double Timer::getElapsedSeconds() const {
-    auto end = isRunning ? std::chrono::high_resolution_clock::now() : endTime;
+    auto end = state ? std::chrono::high_resolution_clock::now() : endTime;
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - startTime);
     return duration.count() / 1000000.0;
 }
 
 double Timer::getElapsedMilliseconds() const {
-    auto end = isRunning ? std::chrono::high_resolution_clock::now() : endTime;
+    auto end = state ? std::chrono::high_resolution_clock::now() : endTime;
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - startTime);
     return duration.count() / 1000.0;
 }
 
 double Timer::getElapsedMicroseconds() const {
-    auto end = isRunning ? std::chrono::high_resolution_clock::now() : endTime;
+    auto end = state ? std::chrono::high_resolution_clock::now() : endTime;
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - startTime);
     return static_cast<double>(duration.count());
 }
 
 bool Timer::running() const {
-    return isRunning;
+    return state;
 }
 
 std::string Timer::getElapsedString() const {
