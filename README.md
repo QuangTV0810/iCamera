@@ -39,19 +39,15 @@ iCamera uses a layered architecture with the following components:
    cd iCamera
    ```
 
-2. **Build the project**:
-   ```bash
-   # Native build (development)
-   ./scripts/build_project.sh native
-   
-   # Cross-compilation for ARM
-   ./scripts/build_project.sh cross
-   ```
+42. Build the project:
 
-3. **Install** (optional):
-   ```bash
-   ./scripts/build_project.sh install
-   ```
+```bash
+# Build for Ubuntu 18.04 (native)
+./scripts/build_ubuntu_18_04.sh
+
+# Build for Luckfox (cross-compile)
+./scripts/build_luckfox.sh
+```
 
 ### Running the Application
 

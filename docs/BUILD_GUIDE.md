@@ -31,10 +31,10 @@ First, build all required dependencies:
 
 ```bash
 # Native build
-./scripts/build.sh native
+./scripts/build_dependencies.sh native
 
 # Cross-compilation
-./scripts/build.sh cross
+./scripts/build_dependencies.sh cross
 ```
 
 ### Step 2: Build Main Project
@@ -42,17 +42,11 @@ First, build all required dependencies:
 After dependencies are built, build the main project:
 
 ```bash
-# Native build
-./scripts/build_project.sh native
+# Build for Ubuntu 18.04 (native)
+./scripts/build_ubuntu_18_04.sh
 
-# Cross-compilation
-./scripts/build_project.sh cross
-
-# Build and install
-./scripts/build_project.sh install
-
-# Clean build
-./scripts/build_project.sh clean
+# Build for Luckfox (cross-compile)
+./scripts/build_luckfox.sh
 ```
 
 ## Manual CMake Build
@@ -64,18 +58,6 @@ If you prefer to use CMake directly:
 mkdir build && cd build
 cmake ..
 make -j$(nproc)
-```
-
-### Cross-compilation
-```bash
-mkdir build && cd build
-cmake .. -DCMAKE_TOOLCHAIN_FILE=../CMakeLists.txt.cross
-make -j$(nproc)
-```
-
-### Install
-```bash
-make install DESTDIR=/path/to/install
 ```
 
 ## Output Structure
