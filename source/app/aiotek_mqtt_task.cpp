@@ -16,6 +16,10 @@ MQTTTask::~MQTTTask()
     stop();
 }
 
+void MQTTTask::init()
+{
+}
+
 void MQTTTask::start()
 {
     std::lock_guard<std::mutex> lock(m_mutex);
@@ -30,7 +34,7 @@ void MQTTTask::start()
         std::cout << "Broker: " << config.broker << ":" << config.port << " (SSL/TLS)" << std::endl;
 
         std::string msg = "hello";
-        AIOTEK::g_mailbox.send({AIOTEK::TaskID::MQTT, AIOTEK::TaskID::MQTT, MailboxMessage{1, msg, msg.length()}});
+        AIOTEK::g_mailbox.send({AIOTEK::TaskID::MQTT_TASK_ID, AIOTEK::TaskID::MQTT_TASK_ID, MailboxMessage{1, msg, msg.length()}});
     });
 
     m_client->onDisconnect([]() { std::cout << "Disconnected from ThingBoard broker!" << std::endl; });
@@ -69,8 +73,9 @@ void MQTTTask::threadFunc()
     AIOTEK_LOG_INFO("MQTTTask: Thread running");
     while (m_running) {
         AIOTEK::MailboxPacket packet = AIOTEK::g_mailbox.receive();
-        if (packet.receiver == AIOTEK::TaskID::MQTT) {
-            std::cout << "[MQTTTask] From: " << AIOTEK::TaskIDToString(packet.sender) << " To: " << AIOTEK::TaskIDToString(packet.receiver) << std::endl;
+        if (packet.receiver == AIOTEK::TaskID::MQTT_TASK_ID) {
+            std::cout << "[MQTTTask] From: " << AIOTEK::TaskIDToString(packet.sender) << " To: " << AIOTEK::TaskIDToString(packet.receiver)
+                      << std::endl;
             switch (packet.msg.signal) {
                 case 1:
                     if (!packet.msg.msg.empty())

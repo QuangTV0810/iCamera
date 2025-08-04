@@ -9,16 +9,7 @@
 
 namespace AIOTEK {
 
-enum class TaskID {
-    Unknown = 0,
-    Console,
-    Sender,
-    Receiver,
-    Audio,
-    Video,
-    Managers,
-    MQTT,
-};
+enum class TaskID { Unknown = 0, Console, Sender, Receiver, Audio, Video, Managers, MQTT_TASK_ID, PUSH_STREAM_TASK_ID };
 
 inline const char* TaskIDToString(TaskID id)
 {
@@ -37,8 +28,10 @@ inline const char* TaskIDToString(TaskID id)
             return "Video";
         case TaskID::Managers:
             return "Managers";
-        case TaskID::MQTT:
-            return "MQTT";
+        case TaskID::MQTT_TASK_ID:
+            return "MQTT_TASK";
+        case TaskID::PUSH_STREAM_TASK_ID:
+            return "PUSH_STREAM_TASK";
         default:
             return "(invalid)";
     }
@@ -54,7 +47,7 @@ inline void PrintAllTaskIDs()
     std::cout << static_cast<int>(TaskID::Audio) << ": " << TaskIDToString(TaskID::Audio) << std::endl;
     std::cout << static_cast<int>(TaskID::Video) << ": " << TaskIDToString(TaskID::Video) << std::endl;
     std::cout << static_cast<int>(TaskID::Managers) << ": " << TaskIDToString(TaskID::Managers) << std::endl;
-    std::cout << static_cast<int>(TaskID::MQTT) << ": " << TaskIDToString(TaskID::MQTT) << std::endl;
+    std::cout << static_cast<int>(TaskID::MQTT_TASK_ID) << ": " << TaskIDToString(TaskID::MQTT_TASK_ID) << std::endl;
 }
 
 struct MailboxMessage {

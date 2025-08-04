@@ -7,7 +7,7 @@ option(CROSS_COMPILE "Enable cross-compilation for ARM" ON)
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
+add_compile_options(-Wno-psabi)
 # Build type
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
@@ -85,13 +85,17 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/source/module/network/mqtt
     ${CMAKE_SOURCE_DIR}/source/module/audio
     ${CMAKE_SOURCE_DIR}/source/module/video
+     ${CMAKE_SOURCE_DIR}/source/module/stream/rtsp
 )
 
 # Find required packages
 find_package(Threads REQUIRED)
 
 # Set library directories
-link_directories(${CMAKE_SOURCE_DIR}/lib)
+link_directories(
+    ${CMAKE_SOURCE_DIR}/lib
+    ~/workspace/camera/rockchip/sdk/luckfox-pico/sysdrv/source/buildroot/buildroot-2023.02.6/output/target/usr/lib
+)
 
 # Source files
 file(GLOB_RECURSE SOURCES 
@@ -113,6 +117,24 @@ target_link_libraries(${PROJECT_NAME}
     ssl
     crypto
     paho-mqtt3cs
+    z
+    v4l2
+    v4lconvert 
+    gnutls
+    nettle
+    hogweed   
+    gmp  
+    unistring
+    tasn1 
+    drm
+    iconv
+    intl
+    avformat
+    avfilter
+    avcodec
+    avutil
+    avdevice
+    swresample
     ${CMAKE_THREAD_LIBS_INIT}
 )
 
@@ -145,6 +167,10 @@ install(DIRECTORY lib/
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "C++ standard: ${CMAKE_CXX_STANDARD}")
 message(STATUS "Cross-compilation: ${CROSS_COMPILE}")
-message(STATUS "Source files: ${SOURCES}")
+message(STATUS "Source files:")
+foreach(file ${SOURCES})
+    message(STATUS "  ${file}")
+endforeach()
+
 message(STATUS "Include directories: ${CMAKE_SOURCE_DIR}/include")
 message(STATUS "Library directories: ${CMAKE_SOURCE_DIR}/lib")

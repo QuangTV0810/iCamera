@@ -9,6 +9,7 @@
 #include "aiotek_net_managers.hpp"
 #include "aiotek_task.hpp"
 #include "aiotek_mqtt_task.hpp"
+#include "aiotek_push_stream_task.hpp"
 
 
 using namespace AIOTEK;
@@ -21,7 +22,8 @@ namespace AIOTEK {
 TaskManagers managers;
 
 TaskManagers::TaskManagers() : m_running(false) {
-    addTask(std::make_unique<MQTTTask>(1));
+    addTask(std::make_unique<MQTTTask>(7));
+    addTask(std::make_unique<PushStreamTask>(8));
 }
 
 TaskManagers::~TaskManagers() {

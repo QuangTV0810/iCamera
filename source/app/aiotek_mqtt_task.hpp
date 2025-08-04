@@ -12,6 +12,7 @@ class MQTTTask : public Task {
 public:
     MQTTTask(int id);
     ~MQTTTask();
+    void init() override;
     void start() override;
     void stop() override;
     bool state() const override;
