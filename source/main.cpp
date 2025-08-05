@@ -16,7 +16,7 @@ void signal_handler(int signal)
 {
     std::cout << "Received signal " << signal << ", shutting down..." << std::endl;
     g_running = false;
-    g_shutdown_requested = true;
+    AIOTEK::managers.stop();
 }
 
 int main()

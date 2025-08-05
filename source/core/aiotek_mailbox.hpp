@@ -5,50 +5,9 @@
 #include <mutex>
 #include <condition_variable>
 #include <optional>
-#include <iostream>
+#include "aiotek_task.hpp"
 
 namespace AIOTEK {
-
-enum class TaskID { Unknown = 0, Console, Sender, Receiver, Audio, Video, Managers, MQTT_TASK_ID, PUSH_STREAM_TASK_ID };
-
-inline const char* TaskIDToString(TaskID id)
-{
-    switch (id) {
-        case TaskID::Unknown:
-            return "Unknown";
-        case TaskID::Console:
-            return "Console";
-        case TaskID::Sender:
-            return "Sender";
-        case TaskID::Receiver:
-            return "Receiver";
-        case TaskID::Audio:
-            return "Audio";
-        case TaskID::Video:
-            return "Video";
-        case TaskID::Managers:
-            return "Managers";
-        case TaskID::MQTT_TASK_ID:
-            return "MQTT_TASK";
-        case TaskID::PUSH_STREAM_TASK_ID:
-            return "PUSH_STREAM_TASK";
-        default:
-            return "(invalid)";
-    }
-}
-
-inline void PrintAllTaskIDs()
-{
-    std::cout << "List of TaskID:" << std::endl;
-    std::cout << static_cast<int>(TaskID::Unknown) << ": " << TaskIDToString(TaskID::Unknown) << std::endl;
-    std::cout << static_cast<int>(TaskID::Console) << ": " << TaskIDToString(TaskID::Console) << std::endl;
-    std::cout << static_cast<int>(TaskID::Sender) << ": " << TaskIDToString(TaskID::Sender) << std::endl;
-    std::cout << static_cast<int>(TaskID::Receiver) << ": " << TaskIDToString(TaskID::Receiver) << std::endl;
-    std::cout << static_cast<int>(TaskID::Audio) << ": " << TaskIDToString(TaskID::Audio) << std::endl;
-    std::cout << static_cast<int>(TaskID::Video) << ": " << TaskIDToString(TaskID::Video) << std::endl;
-    std::cout << static_cast<int>(TaskID::Managers) << ": " << TaskIDToString(TaskID::Managers) << std::endl;
-    std::cout << static_cast<int>(TaskID::MQTT_TASK_ID) << ": " << TaskIDToString(TaskID::MQTT_TASK_ID) << std::endl;
-}
 
 struct MailboxMessage {
     std::int32_t signal;

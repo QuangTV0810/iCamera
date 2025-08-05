@@ -59,7 +59,7 @@ class RTSPPushStream {
     void stop();
     /**
      * @brief check if stream is running
-     * 
+     *
      * @return true - is running
      * @return false - otherwise
      */
@@ -69,8 +69,12 @@ class RTSPPushStream {
     std::string m_input_rtsp_url;
     std::string m_output_rtsp_url;
     std::thread m_push_stream_thread;
-    std::atomic<bool> m_is_running;
+    std::atomic<bool> m_is_thread_running;
     std::mutex m_push_stream_mutex;
+    static const int MAX_STREAMS = 16; // Maximum number of streams to handle
+    int64_t m_last_dts[MAX_STREAMS];   // Track last DTS for each stream
+    int64_t m_last_pts[MAX_STREAMS];   // Track last PTS for each stream
+    bool fixTimestamps(AVPacket* pkt, int stream_index);
 };
 } // namespace rtsp
 } // namespace stream

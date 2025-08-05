@@ -22,8 +22,8 @@ namespace AIOTEK {
 TaskManagers managers;
 
 TaskManagers::TaskManagers() : m_running(false) {
-    addTask(std::make_unique<MQTTTask>(7));
-    addTask(std::make_unique<PushStreamTask>(8));
+    addTask(std::make_unique<MQTTTask>(static_cast<int>(AIOTEK::TaskID::MQTT_TASK_ID)));
+    addTask(std::make_unique<PushStreamTask>(static_cast<int>(AIOTEK::TaskID::PUSH_STREAM_TASK_ID)));
 }
 
 TaskManagers::~TaskManagers() {

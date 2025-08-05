@@ -21,8 +21,12 @@ extern "C" {
 
 namespace AIOTEK {
 
+enum class PushStreamSignal : uint8_t {
+    TERMINATE_THREAD = 0,
+};
+
 class PushStreamTask : public Task {
-public:
+  public:
     PushStreamTask(int id);
     ~PushStreamTask();
     void init() override;
@@ -30,11 +34,14 @@ public:
     void stop() override;
     bool state() const override;
 
-private:
+  private:
     void threadFunc();
-    aiotek::stream::rtsp::RTSPPushStream m_rtsp_pusher;
+    std::atomic<bool> m_is_thread_running{false};
+    std::unique_ptr<aiotek::stream::rtsp::RTSPPushStream> m_rtsp_pusher{nullptr};
+    std::chrono::steady_clock::time_point m_last_restart_time;
+    static constexpr int RESTART_COOLDOWN_MS = 5000;
 };
 
-} // namespace AIOTEK 
+} // namespace AIOTEK
 
 #endif /* __AIOTEK_PUSH_STREAM_H__ */
