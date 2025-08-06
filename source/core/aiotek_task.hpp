@@ -60,6 +60,7 @@ public:
         : m_name(name), m_id(id), m_running(false) {}
     virtual ~Task() = default;
     virtual void init() = 0;
+    virtual void deinit() = 0;
     virtual void start() = 0;
     virtual void stop() = 0;
     virtual bool state() const { return m_running; }

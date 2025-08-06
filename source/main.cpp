@@ -19,12 +19,62 @@ void signal_handler(int signal)
     AIOTEK::managers.stop();
 }
 
+void setupConsoleCommands(aiotek::console::Console& console)
+{
+    // MQTT commands
+    console.registerCommand(1, "Connect to MQTT broker", "MQTT", [](const auto& args) {
+        (void) args;
+        std::cout << "Executing: Connect to MQTT..." << std::endl;
+        // AIOTEK::g_mailbox.send({...});
+    });
+
+    console.registerCommand(
+        2, "Push data to MQTT", "MQTT",
+        [](const auto& args) {
+            (void) args;
+            std::cout << "Executing: Push data..." << std::endl;
+            std::string data;
+            std::getline(std::cin, data);
+            if (!data.empty()) {
+                std::cout << "-> Pushing data: '" << data << "'" << std::endl;
+            } else {
+                std::cout << "-> No data entered." << std::endl;
+            }
+        },
+        true, "Enter data to push: ");
+
+    console.registerCommand(3, "Disconnect from MQTT", "MQTT", [](const auto& args) {
+        (void) args;
+        std::cout << "Executing: Disconnect from MQTT..." << std::endl;
+    });
+
+    console.registerCommand(4, "Show MQTT status", "MQTT", [](const auto& args) {
+        (void) args;
+        std::cout << "Status: MQTT is currently connected." << std::endl;
+    });
+
+    console.registerCommand(5, "Show system status", "System", [](const auto& args) {
+        (void) args;
+        std::cout << "Status: System is running normally." << std::endl;
+    });
+}
+
 int main()
 {
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
 
     std::cout << "iCamera starting..." << std::endl;
+
+    aiotek::console::Console my_console;
+    my_console.init();
+    setupConsoleCommands(my_console);
+    my_console.start();
+
+    my_console.registerCommand(99, "Runtime command", "Runtime", [](const auto& args) {
+        (void) args;
+        std::cout << "This command was added at runtime!" << std::endl;
+    });
 
     AIOTEK::managers.start();
     try {

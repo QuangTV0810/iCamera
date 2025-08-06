@@ -21,6 +21,10 @@ void MQTTTask::init()
 {
 }
 
+void MQTTTask::deinit()
+{
+}
+
 void MQTTTask::start()
 {
     std::lock_guard<std::mutex> lock(m_mutex);
@@ -58,19 +62,16 @@ void MQTTTask::stop()
     std::lock_guard<std::mutex> lock(m_mutex);
     if (!m_is_thread_running)
         return;
-    
+
     // Send terminate signal to this task via mailbox
-    AIOTEK::g_mailbox.send({
-        AIOTEK::TaskID::MQTT_TASK_ID, 
-        AIOTEK::TaskID::MQTT_TASK_ID, 
-        MailboxMessage{static_cast<int32_t>(MQTTSignal::TERMINATE_THREAD), "TERMINATE", 9}
-    });
+    AIOTEK::g_mailbox.send({AIOTEK::TaskID::MQTT_TASK_ID, AIOTEK::TaskID::MQTT_TASK_ID,
+                            MailboxMessage{static_cast<int32_t>(MQTTSignal::TERMINATE_THREAD), "TERMINATE", 9}});
     AIOTEK_LOG_INFO("MQTTTask: Terminate signal sent");
-    
+
     // Wait for thread to finish
     if (m_thread.joinable())
         m_thread.join();
-    
+
     m_is_thread_running = false;
     AIOTEK_LOG_INFO("MQTTTask: Stopped");
 }

@@ -23,7 +23,7 @@ TaskManagers managers;
 
 TaskManagers::TaskManagers() : m_running(false) {
     addTask(std::make_unique<MQTTTask>(static_cast<int>(AIOTEK::TaskID::MQTT_TASK_ID)));
-    addTask(std::make_unique<PushStreamTask>(static_cast<int>(AIOTEK::TaskID::PUSH_STREAM_TASK_ID)));
+    // addTask(std::make_unique<PushStreamTask>(static_cast<int>(AIOTEK::TaskID::PUSH_STREAM_TASK_ID)));
 }
 
 TaskManagers::~TaskManagers() {
@@ -41,7 +41,7 @@ bool TaskManagers::start() {
         task->start();
         AIOTEK_LOG_INFO("TaskManagers: Started task " + task->name());
     }
-    taskThread_ = std::thread(&TaskManagers::run, this);
+
     return true;
 }
 
@@ -54,9 +54,6 @@ void TaskManagers::stop() {
     for (auto& task : tasks_) {
         task->stop();
         AIOTEK_LOG_INFO("TaskManagers: Stopped task " + task->name());
-    }
-    if (taskThread_.joinable()) {
-        taskThread_.join();
     }
 }
 
@@ -94,22 +91,5 @@ std::vector<Task*> TaskManagers::getAllTasks() {
     return result;
 }
 
-void TaskManagers::run() {
-    AIOTEK_LOG_INFO("TaskManagers: Thread started");
-    timer_.start();
-    while (m_running) {
-        processManagers();
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
-    timer_.stop();
-    AIOTEK_LOG_INFO("TaskManagers: Thread stopped after " + timer_.getElapsedString());
-}
-
-void TaskManagers::processManagers() {
-    static int counter = 0;
-    if (++counter % 100 == 0) {
-        AIOTEK_LOG_DEBUG("TaskManagers: Processing managers");
-    }
-}
 
 } // namespace AIOTEK

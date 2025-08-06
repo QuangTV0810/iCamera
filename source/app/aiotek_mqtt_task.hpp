@@ -26,6 +26,7 @@ public:
     MQTTTask(int id);
     ~MQTTTask();
     void init() override;
+    void deinit() override;
     void start() override;
     void stop() override;
     bool state() const override;

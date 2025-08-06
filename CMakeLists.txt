@@ -85,7 +85,8 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/source/module/network/mqtt
     ${CMAKE_SOURCE_DIR}/source/module/audio
     ${CMAKE_SOURCE_DIR}/source/module/video
-     ${CMAKE_SOURCE_DIR}/source/module/stream/rtsp
+    ${CMAKE_SOURCE_DIR}/source/module/stream/rtsp
+    ${CMAKE_SOURCE_DIR}/source/module/console
 )
 
 # Find required packages

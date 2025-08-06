@@ -8,7 +8,7 @@ namespace AIOTEK {
 PushStreamTask::PushStreamTask(int id) : Task("PUSH_TASK_ID", id), m_is_thread_running(false), m_rtsp_pusher(nullptr), m_last_restart_time(std::chrono::steady_clock::now())
 {
     m_rtsp_pusher = std::make_unique<aiotek::stream::rtsp::RTSPPushStream>(
-        "rtsp://192.168.137.220:554/live/0", 
+        "rtsp://192.168.137.8:554/live/0", 
         "rtsp://192.168.137.71:554/live/stream"
     );
 }
@@ -22,6 +22,10 @@ void PushStreamTask::init()
     if (m_rtsp_pusher) {
         m_rtsp_pusher->init();
     }
+}
+
+void PushStreamTask::deinit() {
+
 }
 
 void PushStreamTask::start()
@@ -75,7 +79,7 @@ void PushStreamTask::threadFunc()
     AIOTEK_LOG_INFO("PushStreamTask: Thread running");
 
     while (m_is_thread_running) {
-        // Check mailbox for messages (non-blocking with timeout)
+
         auto packet_opt = AIOTEK::g_mailbox.try_receive();
         if (packet_opt.has_value()) {
             AIOTEK::MailboxPacket packet = packet_opt.value();
@@ -94,7 +98,6 @@ void PushStreamTask::threadFunc()
             }
         }
 
-        // Check RTSP stream status every 100ms
         if (m_rtsp_pusher) {
             bool is_stream_running = m_rtsp_pusher->isRunning();
             if (!is_stream_running) {

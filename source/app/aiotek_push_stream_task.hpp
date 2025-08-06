@@ -23,6 +23,10 @@ namespace AIOTEK {
 
 enum class PushStreamSignal : uint8_t {
     TERMINATE_THREAD = 0,
+    START_PUSH_STREAM_SIG,
+    STOP_PUSH_STREAM_SIG,
+    PAUSE_PUSH_STREAM_SIG,
+    CONTINUE_PUSH_STREAM_SIG
 };
 
 class PushStreamTask : public Task {
@@ -30,6 +34,7 @@ class PushStreamTask : public Task {
     PushStreamTask(int id);
     ~PushStreamTask();
     void init() override;
+    void deinit() override;
     void start() override;
     void stop() override;
     bool state() const override;
