@@ -66,16 +66,7 @@ int main()
 
     std::cout << "iCamera starting..." << std::endl;
 
-    aiotek::console::Console my_console;
-    my_console.init();
-    setupConsoleCommands(my_console);
-    my_console.start();
-
-    my_console.registerCommand(99, "Runtime command", "Runtime", [](const auto& args) {
-        (void) args;
-        std::cout << "This command was added at runtime!" << std::endl;
-    });
-
+    AIOTEK::managers.init();
     AIOTEK::managers.start();
     try {
         AIOTEK_LOG_INFO("iCamera application started");

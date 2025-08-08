@@ -10,12 +10,7 @@
 #include "aiotek_task.hpp"
 #include "aiotek_mqtt_task.hpp"
 #include "aiotek_push_stream_task.hpp"
-
-
-using namespace AIOTEK;
-extern void task_sender();
-extern void task_receiver();
-extern void task_mqtt();
+#include "aiotek_console_task.hpp"
 
 namespace AIOTEK {
 
@@ -23,18 +18,29 @@ TaskManagers managers;
 
 TaskManagers::TaskManagers() : m_running(false) {
     addTask(std::make_unique<MQTTTask>(static_cast<int>(AIOTEK::TaskID::MQTT_TASK_ID)));
-    // addTask(std::make_unique<PushStreamTask>(static_cast<int>(AIOTEK::TaskID::PUSH_STREAM_TASK_ID)));
+    addTask(std::make_unique<PushStreamTask>(static_cast<int>(AIOTEK::TaskID::PUSH_STREAM_TASK_ID)));
+    addTask(std::make_unique<app::ConsoleTask>(static_cast<int>(AIOTEK::TaskID::CONSOLE_TASK_ID)));
 }
 
 TaskManagers::~TaskManagers() {
     stop();
 }
 
+bool TaskManagers::init() {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    for (auto& task : tasks_) {
+        AIOTEK_LOG_INFO("TaskManagers: Initialize task " + task->name());
+        task->init();
+    }
+
+    return true;
+}
+
 bool TaskManagers::start() {
     std::lock_guard<std::mutex> lock(m_mutex);
     if (m_running)
         return true;
-    AIOTEK_LOG_INFO("TaskManagers: Starting");
+
     m_running = true;
 
     for (auto& task : tasks_) {

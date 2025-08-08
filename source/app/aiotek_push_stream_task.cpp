@@ -8,13 +8,14 @@ namespace AIOTEK {
 PushStreamTask::PushStreamTask(int id) : Task("PUSH_TASK_ID", id), m_is_thread_running(false), m_rtsp_pusher(nullptr), m_last_restart_time(std::chrono::steady_clock::now())
 {
     m_rtsp_pusher = std::make_unique<aiotek::stream::rtsp::RTSPPushStream>(
-        "rtsp://192.168.137.8:554/live/0", 
+        "rtsp://192.168.137.14:554/live/0", 
         "rtsp://192.168.137.71:554/live/stream"
     );
 }
 PushStreamTask::~PushStreamTask()
 {
     stop();
+    deinit();
 }
 
 void PushStreamTask::init()
