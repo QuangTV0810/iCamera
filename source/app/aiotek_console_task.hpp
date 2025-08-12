@@ -14,9 +14,9 @@
 
 namespace AIOTEK {
 
-enum class ConsoleSignal : uint8_t {
+enum class ConsoleSignal : int32_t {
     // Thread control signals
-    TERMINATE_THREAD = 0,
+    TERMINATE_THREAD = -1,
 };
 namespace app {
 class ConsoleTask : public Task {

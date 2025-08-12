@@ -9,9 +9,9 @@
 namespace AIOTEK {
 
 // MQTT Signal enum class to manage all MQTT task signals
-enum class MQTTSignal : uint8_t {
+enum class MQTTSignal : int32_t {
     // Thread control signals
-    TERMINATE_THREAD = 0,
+    TERMINATE_THREAD = -1,
     
     // MQTT operation signals
     CONNECT = 10,

@@ -13,7 +13,7 @@
 
 namespace AIOTEK {
 
-enum class TaskID { Unknown = 0, Sender, Receiver, Audio, Video, Managers, MQTT_TASK_ID, PUSH_STREAM_TASK_ID, CONSOLE_TASK_ID };
+enum class TaskID { Unknown = 0, Sender, Receiver, Audio, Video, Managers, MQTT_TASK_ID, PUSH_STREAM_TASK_ID, PUSH_RTMP_TASK_ID, CONSOLE_TASK_ID };
 
 inline const char* TaskIDToString(TaskID id)
 {
@@ -61,10 +61,26 @@ class Task {
     {
     }
     virtual ~Task() = default;
-    virtual void init() = 0;
-    virtual void deinit() = 0;
-    virtual void start() = 0;
-    virtual void stop() = 0;
+    virtual void init()
+    {
+        m_running.store(false);
+    }
+    virtual void deinit()
+    {
+        if (m_running.load() == true) {
+            stop();
+        }
+    }
+    virtual void start()
+    {
+        if (m_running.load() == false) {
+            m_running.store(true);
+        }
+    }
+    virtual void stop()
+    {
+        m_running.store(false);
+    }
     virtual bool state() const
     {
         return m_running;
@@ -83,7 +99,7 @@ class Task {
     int m_id;
     std::atomic<bool> m_running;
     std::thread m_thread;
-    mutable std::mutex m_mutex;
+    mutable std::mutex m_task_mutex;
 };
 
 class TaskManagers {
@@ -100,13 +116,10 @@ class TaskManagers {
     std::vector<Task*> getAllTasks();
 
   private:
-    bool m_running;
+    // bool m_running;
     std::thread taskThread_;
-    Timer timer_;
     std::vector<std::unique_ptr<Task>> tasks_;
-    mutable std::mutex m_mutex;
-    void run();
-    void processManagers();
+    mutable std::mutex m_task_manager_mutex;
 };
 
 extern TaskManagers managers;

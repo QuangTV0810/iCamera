@@ -1,11 +1,12 @@
-#ifndef __AIOTEK_PUSH_STREAM_H__
-#define __AIOTEK_PUSH_STREAM_H__
+#ifndef __AIOTEK_RTMP_PUSH_H__
+#define __AIOTEK_RTMP_PUSH_H__
 #include <string>
 #include <atomic>
 #include <thread>
 #include <mutex>
 #include "aiotek_task.hpp"
 #include "aiotek_rtsp_push.hpp"
+#include "aiotek_rtmp_push.hpp"
 
 #ifdef __cplusplus
 extern "C" {
@@ -20,8 +21,8 @@ extern "C" {
 #endif
 
 namespace AIOTEK {
-
-enum class PushStreamSignal : int32_t {
+namespace app {
+enum class RTMPPushSignal : int32_t {
     TERMINATE_THREAD = -1,
     START_PUSH_STREAM_SIG,
     STOP_PUSH_STREAM_SIG,
@@ -29,10 +30,10 @@ enum class PushStreamSignal : int32_t {
     CONTINUE_PUSH_STREAM_SIG
 };
 
-class PushStreamTask : public Task {
+class RTMPPushTask : public Task {
   public:
-    PushStreamTask(int id);
-    ~PushStreamTask();
+    RTMPPushTask(int id);
+    ~RTMPPushTask();
     void init() override;
     void deinit() override;
     void start() override;
@@ -42,12 +43,10 @@ class PushStreamTask : public Task {
   private:
     void threadFunc();
     std::mutex m_mutex;
+    std::atomic<bool> m_is_thread_need_stop;
     std::atomic<bool> m_is_thread_running{false};
-    std::unique_ptr<aiotek::stream::rtsp::RTSPPushStream> m_rtsp_pusher{nullptr};
-    std::chrono::steady_clock::time_point m_last_restart_time;
-    static constexpr int RESTART_COOLDOWN_MS = 5000;
+    std::unique_ptr<aiotek::module::stream::rtmp::RTMPPushStream> m_rtmp_pusher{nullptr};
 };
-
+} // namespace app
 } // namespace AIOTEK
-
-#endif /* __AIOTEK_PUSH_STREAM_H__ */
+#endif /* __AIOTEK_RTMP_PUSH_H__ */

@@ -40,12 +40,9 @@ void ConsoleTask::start()
 
     m_is_thread_need_stop.store(false);
     m_is_thread_running.store(true);
-    m_running.store(true);
 
     m_thread = std::thread([this]() -> void {
         this->threadFunc();
-        this->m_is_thread_running.store(false);
-        this->m_running.store(false);
     });
 }
 

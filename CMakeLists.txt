@@ -86,6 +86,7 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/source/module/audio
     ${CMAKE_SOURCE_DIR}/source/module/video
     ${CMAKE_SOURCE_DIR}/source/module/stream/rtsp
+    ${CMAKE_SOURCE_DIR}/source/module/stream/rtmp
     ${CMAKE_SOURCE_DIR}/source/module/console
 )
 
