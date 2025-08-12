@@ -9,66 +9,73 @@
 #include "aiotek_net_managers.hpp"
 #include "aiotek_task.hpp"
 #include "aiotek_mqtt_task.hpp"
-
-
-using namespace AIOTEK;
-extern void task_sender();
-extern void task_receiver();
-extern void task_mqtt();
+#include "aiotek_push_stream_task.hpp"
+#include "aiotek_console_task.hpp"
+#include "aiotek_rtmp_push_stream_task.hpp"
 
 namespace AIOTEK {
 
 TaskManagers managers;
 
-TaskManagers::TaskManagers() : m_running(false) {
-    addTask(std::make_unique<MQTTTask>(1));
+TaskManagers::TaskManagers() {
+    // addTask(std::make_unique<MQTTTask>(static_cast<int>(AIOTEK::TaskID::MQTT_TASK_ID)));
+    // addTask(std::make_unique<PushStreamTask>(static_cast<int>(AIOTEK::TaskID::PUSH_STREAM_TASK_ID)));
+    addTask(std::make_unique<app::RTMPPushTask>(static_cast<int>(AIOTEK::TaskID::PUSH_RTMP_TASK_ID)));
+    // addTask(std::make_unique<app::ConsoleTask>(static_cast<int>(AIOTEK::TaskID::CONSOLE_TASK_ID)));
 }
 
 TaskManagers::~TaskManagers() {
     stop();
 }
 
+bool TaskManagers::init() {
+    // std::lock_guard<std::mutex> lock(m_mutex);
+    for (auto& task : tasks_) {
+        AIOTEK_LOG_INFO("TaskManagers: Initialize task " + task->name());
+        task->init();
+    }
+
+    return true;
+}
+
 bool TaskManagers::start() {
-    std::lock_guard<std::mutex> lock(m_mutex);
-    if (m_running)
-        return true;
-    AIOTEK_LOG_INFO("TaskManagers: Starting");
-    m_running = true;
+    // std::lock_guard<std::mutex> lock(m_mutex);
+    // if (m_running)
+    //     return true;
+
+    // m_running = true;
 
     for (auto& task : tasks_) {
         task->start();
         AIOTEK_LOG_INFO("TaskManagers: Started task " + task->name());
     }
-    taskThread_ = std::thread(&TaskManagers::run, this);
+
     return true;
 }
 
 void TaskManagers::stop() {
-    std::lock_guard<std::mutex> lock(m_mutex);
-    if (!m_running)
-        return;
-    AIOTEK_LOG_INFO("TaskManagers: Stopping");
-    m_running = false;
+    // std::lock_guard<std::mutex> lock(m_mutex);
+    // if (!m_running)
+    //     return;
+
+    // m_running = false;
     for (auto& task : tasks_) {
+        AIOTEK_LOG_INFO("TaskManagers: Stopping task " + task->name());
         task->stop();
-        AIOTEK_LOG_INFO("TaskManagers: Stopped task " + task->name());
-    }
-    if (taskThread_.joinable()) {
-        taskThread_.join();
     }
 }
 
 bool TaskManagers::state() const {
-    return m_running;
+    return true;
 }
 
 void TaskManagers::addTask(std::unique_ptr<Task> task) {
-    std::lock_guard<std::mutex> lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_task_manager_mutex);
     tasks_.push_back(std::move(task));
 }
 
 Task* TaskManagers::getTaskByName(const std::string& name) {
-    std::lock_guard<std::mutex> lock(m_mutex);
+    // std::lock_guard<std::mutex> lock(m_mutex);
     for (auto& task : tasks_) {
         if (task->name() == name) return task.get();
     }
@@ -76,7 +83,7 @@ Task* TaskManagers::getTaskByName(const std::string& name) {
 }
 
 Task* TaskManagers::getTaskById(int id) {
-    std::lock_guard<std::mutex> lock(m_mutex);
+    // std::lock_guard<std::mutex> lock(m_mutex);
     for (auto& task : tasks_) {
         if (task->id() == id) return task.get();
     }
@@ -84,7 +91,7 @@ Task* TaskManagers::getTaskById(int id) {
 }
 
 std::vector<Task*> TaskManagers::getAllTasks() {
-    std::lock_guard<std::mutex> lock(m_mutex);
+    // std::lock_guard<std::mutex> lock(m_mutex);
     std::vector<Task*> result;
     for (auto& task : tasks_) {
         result.push_back(task.get());
@@ -92,22 +99,5 @@ std::vector<Task*> TaskManagers::getAllTasks() {
     return result;
 }
 
-void TaskManagers::run() {
-    AIOTEK_LOG_INFO("TaskManagers: Thread started");
-    timer_.start();
-    while (m_running) {
-        processManagers();
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
-    timer_.stop();
-    AIOTEK_LOG_INFO("TaskManagers: Thread stopped after " + timer_.getElapsedString());
-}
-
-void TaskManagers::processManagers() {
-    static int counter = 0;
-    if (++counter % 100 == 0) {
-        AIOTEK_LOG_DEBUG("TaskManagers: Processing managers");
-    }
-}
 
 } // namespace AIOTEK
