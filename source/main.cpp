@@ -9,14 +9,17 @@
 #include "aiotek_mqtt.hpp"
 #include "aiotek_task.hpp"
 #include "aiotek_console.hpp"
+#include "aiotek_task_list.hpp"
+#include "task.hpp"
 
 volatile bool g_running = true;
-
+TaskManager task_manager;
 void signal_handler(int signal)
 {
     std::cout << "Received signal " << signal << ", shutting down..." << std::endl;
     g_running = false;
     AIOTEK::managers.stop();
+    task_manager.StopAll();
 }
 
 void setupConsoleCommands(aiotek::console::Console& console)
@@ -73,6 +76,10 @@ int main()
 
         AIOTEK::Timer timer;
         timer.start();
+
+        TaskList();
+        
+        task_manager.StartAll();
 
         while (g_running) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));

@@ -20,7 +20,7 @@ TaskManagers managers;
 TaskManagers::TaskManagers() {
     // addTask(std::make_unique<MQTTTask>(static_cast<int>(AIOTEK::TaskID::MQTT_TASK_ID)));
     // addTask(std::make_unique<PushStreamTask>(static_cast<int>(AIOTEK::TaskID::PUSH_STREAM_TASK_ID)));
-    addTask(std::make_unique<app::RTMPPushTask>(static_cast<int>(AIOTEK::TaskID::PUSH_RTMP_TASK_ID)));
+    // addTask(std::make_unique<app::RTMPPushTask>(static_cast<int>(AIOTEK::TaskID::PUSH_RTMP_TASK_ID)));
     // addTask(std::make_unique<app::ConsoleTask>(static_cast<int>(AIOTEK::TaskID::CONSOLE_TASK_ID)));
 }
 
