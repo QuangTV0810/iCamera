@@ -1,7 +1,13 @@
 #pragma once
 
-/**
- * @brief Initializes task registration for the application.
- *        Called to register tasks with TaskManager.
- */
-void TaskList();
+namespace aiotek {
+namespace app {
+enum TaskID : int {
+    MQTT_TASK,
+    RTSP_TASK,
+    RTMP_TASK,
+    MAX_TASK,
+};
+void RegisterAllTask();
+} // namespace app
+} // namespace aiotek

@@ -7,18 +7,16 @@
 #include "aiotek_timer.hpp"
 #include "aiotek_net_if.hpp"
 #include "aiotek_mqtt.hpp"
-#include "aiotek_task.hpp"
 #include "aiotek_console.hpp"
 #include "aiotek_task_list.hpp"
-#include "task.hpp"
+#include "aiotek_task.hpp"
 
 volatile bool g_running = true;
-TaskManager task_manager;
+aiotek::core::TaskManager task_manager;
 void signal_handler(int signal)
 {
     std::cout << "Received signal " << signal << ", shutting down..." << std::endl;
     g_running = false;
-    AIOTEK::managers.stop();
     task_manager.StopAll();
 }
 
@@ -69,16 +67,14 @@ int main()
 
     std::cout << "iCamera starting..." << std::endl;
 
-    AIOTEK::managers.init();
-    AIOTEK::managers.start();
     try {
         AIOTEK_LOG_INFO("iCamera application started");
 
         AIOTEK::Timer timer;
         timer.start();
 
-        TaskList();
-        
+        aiotek::app::RegisterAllTask();
+
         task_manager.StartAll();
 
         while (g_running) {
@@ -90,10 +86,9 @@ int main()
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
         AIOTEK_LOG_ERROR("Application error: " + std::string(e.what()));
-        AIOTEK::managers.stop();
         return 1;
     }
-    AIOTEK::managers.stop();
+
     std::cout << "iCamera stopped" << std::endl;
     return 0;
 }

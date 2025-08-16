@@ -1,90 +1,36 @@
+#include "aiotek_task.hpp"
 #include "aiotek_task_list.hpp"
-#include "task.hpp"
-#include "aiotek_task_test.hpp"
-#include <chrono>
-#include <thread>
-#include <iostream>
-#include "mailbox.hpp"
+#include "aiotek_rtsp_get_task.hpp"
+#include "aiotek_rtmp_push_task.hpp"
 
-extern void ThreadMQTTHandler(Task& task);
-extern void ThreadStreamHandler(Task& task);
+namespace aiotek {
+namespace app {
 
-// Register tasks with TaskManager
-void TaskList()
+void RegisterAllTask()
 {
-    // TaskManager::RegisterTask(
-    //     [](Task& task) {
-    //         while (task.IsOperation()) {
-    //             if (task.IsSuspended()) {
-    //                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    //                 continue;
-    //             }
-    //             // Try receive message for this task
-    //             auto packet = aiotek::core::m_mailbox.try_receive(task.IsOperation()); // Use task ID
-    //             if (packet) {
-    //                 // Process packet (e.g., log signal)
-    //                 std::cout << "Video received signal: " << packet->msg.signal << std::endl;
-    //             }
-    //             // Video capture logic
-    //         }
-    //     },
-    //     "Video_Task", 3);
-
-    // TaskManager::RegisterTask(
-    //     [](Task& task) {
-    //         while (task.IsOperation()) {
-    //             if (task.IsSuspended()) {
-    //                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    //                 continue;
-    //             }
-    //             // MQTT task sends a message to Video_Task
-    //             aiotek::core::MailboxPacket packet{task.IsOperation(), 1, {100, "MQTT message", 0}};
-    //             aiotek::core::m_mailbox.send(packet);
-
-    //             // aiotek::core::MailboxPacket packet2 = {task.IsOperation(), 3, {300, "Video message", 0}};
-    //             // aiotek::core::m_mailbox.send(packet);
-    //         }
-    //     },
-    //     "MQTT_Task", 4);
-
-    TaskManager::RegisterTask(
-        [](Task& task) {
-            while (task.IsOperation()) {
-                if (task.IsSuspended()) {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                    continue;
-                }
-
-                aiotek::core::MailboxPacket packet{1, 3, {12345, "MQTT message", 0}};
-                aiotek::core::m_mailbox.send(packet);
-
-                aiotek::core::MailboxPacket packet2 = {1, 2, {300, "Video message", 0}};
-                aiotek::core::m_mailbox.send(packet2);
-
-                // std::cout << "Test_1_Task is running" << std::endl;
-                // std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    aiotek::core::TaskManager::RegisterTask(
+        [](aiotek::core::Task& task) {
+            AIOTEK_LOG_INFO("GetRTSPTask: Registering handler");
+            try {
+                aiotek::app::GetRTSPTask m_rtsp("rtsp://192.168.137.11:554/live/0");
+                m_rtsp.ThreadGetRTSPHandler(task);
+            } catch (const std::exception& e) {
+                std::cout << "GetRTSPTask: Exception in handler: " << e.what() << std::endl;
             }
         },
-        "Test_1_Task", 1);
+        "RTSP_TASK", RTSP_TASK);
 
-    TaskManager::RegisterTask(
-        [](Task& task) {
-            while (task.IsOperation()) {
-                if (task.IsSuspended()) {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                    continue;
-                }
-                // Try receive message for this task
-                auto packet = aiotek::core::m_mailbox.try_receive(2); // Use task ID
-                if (packet) {
-                    std::cout << "Test_2_Task received signal: " << packet->msg.signal << std::endl;
-                }
-                // std::cout << "Test_2_Task is running" << std::endl;
-                // std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    aiotek::core::TaskManager::RegisterTask(
+        [](aiotek::core::Task& task) {
+            AIOTEK_LOG_INFO("PushRTMPTask: Registering handler");
+            try {
+                aiotek::app::PushRTMPTask m_rtmp("rtmp://192.168.137.45:1935/live/stream");
+                m_rtmp.ThreadPushRTMPHandler(task);
+            } catch (const std::exception& e) {
+                std::cout << "PushRTMPTask: Exception in handler: " << e.what() << std::endl;
             }
         },
-        "Test_2_Task", 2);
-
-    TaskManager::RegisterTask(ThreadMQTTHandler, "MQTT_Task", 3);
-    TaskManager::RegisterTask(ThreadStreamHandler, "Stream_Task", 4);
+        "RTMP_TASK", RTMP_TASK);
 }
+} // namespace app
+} // namespace aiotek
