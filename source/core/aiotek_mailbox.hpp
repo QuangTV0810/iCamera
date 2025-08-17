@@ -1,37 +1,39 @@
 #pragma once
+
 #include <variant>
 #include <string>
 #include <queue>
 #include <mutex>
 #include <condition_variable>
 #include <optional>
-#include "aiotek_task.hpp"
+#include <any>
 
-namespace AIOTEK {
+namespace aiotek {
+namespace core {
 
-struct MailboxMessage {
+using TaskID = int;
+
+struct MailboxPacket {
+    TaskID task_sender_id;
+    TaskID task_receiver_id;
     std::int32_t signal;
-    std::string msg;
+    std::any msg;
     std::uint64_t len;
 };
 
-struct MailboxPacket {
-    TaskID sender;
-    TaskID receiver;
-    MailboxMessage msg;
-};
-
 class Mailbox {
-  public:
-    void send(const MailboxPacket& env);
+public:
+    explicit Mailbox(size_t max_queue_size = 100, TaskID task_id = 0);
+    bool send(const MailboxPacket& packet);
     MailboxPacket receive();
-    std::optional<MailboxPacket> try_receive();
-
-  private:
-    std::queue<MailboxPacket> m_queue;
+    std::optional<MailboxPacket> receive(std::chrono::milliseconds timeout);
+private:
+    std::deque<MailboxPacket> m_queue;
     std::mutex m_mutex;
     std::condition_variable m_cond;
+    size_t m_max_queue_size;
+    TaskID m_task_id;
 };
 
-extern Mailbox g_mailbox;
-} // namespace AIOTEK
+} // namespace core
+} // namespace aiotek

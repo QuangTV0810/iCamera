@@ -1,103 +1,129 @@
-#include <iostream>
-#include <thread>
-#include <chrono>
-#include <vector>
-#include <functional>
-#include <string>
-#include "aiotek_log.hpp"
-#include "aiotek_timer.hpp"
-#include "aiotek_net_managers.hpp"
 #include "aiotek_task.hpp"
-#include "aiotek_mqtt_task.hpp"
-#include "aiotek_push_stream_task.hpp"
-#include "aiotek_console_task.hpp"
-#include "aiotek_rtmp_push_stream_task.hpp"
+#include <pthread.h>
+#include <iostream>
 
-namespace AIOTEK {
+namespace aiotek {
+namespace core {
 
-TaskManagers managers;
+std::vector<std::shared_ptr<Task>> TaskManager::m_tasks;
+std::mutex TaskManager::m_manager_mutex;
 
-TaskManagers::TaskManagers() {
-    // addTask(std::make_unique<MQTTTask>(static_cast<int>(AIOTEK::TaskID::MQTT_TASK_ID)));
-    // addTask(std::make_unique<PushStreamTask>(static_cast<int>(AIOTEK::TaskID::PUSH_STREAM_TASK_ID)));
-    addTask(std::make_unique<app::RTMPPushTask>(static_cast<int>(AIOTEK::TaskID::PUSH_RTMP_TASK_ID)));
-    // addTask(std::make_unique<app::ConsoleTask>(static_cast<int>(AIOTEK::TaskID::CONSOLE_TASK_ID)));
+Task::Task(const std::string& name, int id, std::function<void(Task&)> handler)
+    : m_task_name(name), m_task_id(id), m_handler(handler), m_is_task_running(false), m_is_suspended(false), m_mailbox(32, id)
+{
 }
 
-TaskManagers::~TaskManagers() {
-    stop();
+Task::~Task()
+{
+    Stop();
 }
 
-bool TaskManagers::init() {
-    // std::lock_guard<std::mutex> lock(m_mutex);
-    for (auto& task : tasks_) {
-        AIOTEK_LOG_INFO("TaskManagers: Initialize task " + task->name());
-        task->init();
+void Task::Start()
+{
+    if (m_is_task_running.exchange(true))
+        return;
+    std::lock_guard<std::mutex> lock(m_task_mutex);
+    m_thread = std::thread(m_handler, std::ref(*this));
+}
+
+void Task::Stop()
+{
+    if (!m_is_task_running.exchange(false))
+        return;
+    {
+        std::lock_guard<std::mutex> lock(m_task_mutex);
+        m_is_suspended = false;
     }
-
-    return true;
+    if (m_thread.joinable())
+        m_thread.join();
 }
 
-bool TaskManagers::start() {
-    // std::lock_guard<std::mutex> lock(m_mutex);
-    // if (m_running)
-    //     return true;
+void Task::Suspend()
+{
+    std::lock_guard<std::mutex> lock(m_task_mutex);
+    m_is_suspended = true;
+}
 
-    // m_running = true;
+void Task::Resume()
+{
+    std::lock_guard<std::mutex> lock(m_task_mutex);
+    m_is_suspended = false;
+}
 
-    for (auto& task : tasks_) {
-        task->start();
-        AIOTEK_LOG_INFO("TaskManagers: Started task " + task->name());
+bool Task::IsOperation() const
+{
+    return m_is_task_running.load();
+}
+
+bool Task::IsSuspended() const
+{
+    std::lock_guard<std::mutex> lock(m_task_mutex);
+    return m_is_suspended;
+}
+
+std::vector<TaskManager::TaskInfo>& TaskManager::GetTaskRegistry()
+{
+    static std::vector<TaskInfo> registry;
+    return registry;
+}
+
+std::mutex& TaskManager::GetRegistryMutex()
+{
+    static std::mutex registry_mutex;
+    return registry_mutex;
+}
+
+void TaskManager::RegisterTask(std::function<void(Task&)> handler, const std::string& name, int id)
+{
+    std::lock_guard<std::mutex> lock(GetRegistryMutex());
+    GetTaskRegistry().push_back({handler, name, id});
+    std::cout << "Register task: " << name << std::endl;
+}
+
+void TaskManager::StartAll()
+{
+    std::lock_guard<std::mutex> lock(m_manager_mutex);
+    m_tasks.clear();
+    for (const auto& task_info : GetTaskRegistry()) {
+        auto task = std::make_shared<Task>(task_info.name, task_info.id, task_info.handler);
+        m_tasks.push_back(task);
+        task->Start();
+        std::cout << "Task: " << task_info.name << " started" << std::endl;
     }
-
-    return true;
 }
 
-void TaskManagers::stop() {
-    // std::lock_guard<std::mutex> lock(m_mutex);
-    // if (!m_running)
-    //     return;
-
-    // m_running = false;
-    for (auto& task : tasks_) {
-        AIOTEK_LOG_INFO("TaskManagers: Stopping task " + task->name());
-        task->stop();
-    }
+void TaskManager::StopAll()
+{
+    std::lock_guard<std::mutex> lock(m_manager_mutex);
+    for (auto& task : m_tasks)
+        task->Stop();
+    m_tasks.clear();
 }
 
-bool TaskManagers::state() const {
-    return true;
+void TaskManager::SuspendAll()
+{
+    std::lock_guard<std::mutex> lock(m_manager_mutex);
+    for (auto& task : m_tasks)
+        task->Suspend();
 }
 
-void TaskManagers::addTask(std::unique_ptr<Task> task) {
-    std::lock_guard<std::mutex> lock(m_task_manager_mutex);
-    tasks_.push_back(std::move(task));
+void TaskManager::ResumeAll()
+{
+    std::lock_guard<std::mutex> lock(m_manager_mutex);
+    for (auto& task : m_tasks)
+        task->Resume();
 }
 
-Task* TaskManagers::getTaskByName(const std::string& name) {
-    // std::lock_guard<std::mutex> lock(m_mutex);
-    for (auto& task : tasks_) {
-        if (task->name() == name) return task.get();
+Mailbox* TaskManager::GetMailbox(int task_id)
+{
+    std::lock_guard<std::mutex> lock(m_manager_mutex);
+    for (auto& task : m_tasks) {
+        if (task->GetId() == task_id) {
+            return &task->GetMailbox();
+        }
     }
     return nullptr;
 }
 
-Task* TaskManagers::getTaskById(int id) {
-    // std::lock_guard<std::mutex> lock(m_mutex);
-    for (auto& task : tasks_) {
-        if (task->id() == id) return task.get();
-    }
-    return nullptr;
-}
-
-std::vector<Task*> TaskManagers::getAllTasks() {
-    // std::lock_guard<std::mutex> lock(m_mutex);
-    std::vector<Task*> result;
-    for (auto& task : tasks_) {
-        result.push_back(task.get());
-    }
-    return result;
-}
-
-
-} // namespace AIOTEK
+} // namespace core
+} // namespace aiotek
