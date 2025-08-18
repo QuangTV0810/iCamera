@@ -3,7 +3,7 @@
 #include <chrono>
 #include <signal.h>
 
-#include "aiotek_log.hpp"
+#include "aiotek_logger.hpp"
 #include "aiotek_timer.hpp"
 #include "aiotek_net_if.hpp"
 #include "aiotek_mqtt.hpp"
@@ -13,51 +13,12 @@
 
 volatile bool g_running = true;
 aiotek::core::TaskManager task_manager;
+
 void signal_handler(int signal)
 {
     std::cout << "Received signal " << signal << ", shutting down..." << std::endl;
     g_running = false;
     task_manager.StopAll();
-}
-
-void setupConsoleCommands(aiotek::console::Console& console)
-{
-    // MQTT commands
-    console.registerCommand(1, "Connect to MQTT broker", "MQTT", [](const auto& args) {
-        (void) args;
-        std::cout << "Executing: Connect to MQTT..." << std::endl;
-        // AIOTEK::g_mailbox.send({...});
-    });
-
-    console.registerCommand(
-        2, "Push data to MQTT", "MQTT",
-        [](const auto& args) {
-            (void) args;
-            std::cout << "Executing: Push data..." << std::endl;
-            std::string data;
-            std::getline(std::cin, data);
-            if (!data.empty()) {
-                std::cout << "-> Pushing data: '" << data << "'" << std::endl;
-            } else {
-                std::cout << "-> No data entered." << std::endl;
-            }
-        },
-        true, "Enter data to push: ");
-
-    console.registerCommand(3, "Disconnect from MQTT", "MQTT", [](const auto& args) {
-        (void) args;
-        std::cout << "Executing: Disconnect from MQTT..." << std::endl;
-    });
-
-    console.registerCommand(4, "Show MQTT status", "MQTT", [](const auto& args) {
-        (void) args;
-        std::cout << "Status: MQTT is currently connected." << std::endl;
-    });
-
-    console.registerCommand(5, "Show system status", "System", [](const auto& args) {
-        (void) args;
-        std::cout << "Status: System is running normally." << std::endl;
-    });
 }
 
 int main()
@@ -70,11 +31,92 @@ int main()
     try {
         AIOTEK_LOG_INFO("iCamera application started");
 
-        AIOTEK::Timer timer;
-        timer.start();
+        aiotek::core::TimerManager::GetInstance().Start();
+
+        aiotek::core::Timer timer1;
+        int user_data1 = 42;
+        timer1.Initialize(
+            "Timer1", 100, aiotek::core::Timer::TimerType::ONESHOT,
+            std::chrono::milliseconds(5000),
+            [](aiotek::core::Timer* timer, void* data) {
+                int value = *(int*)data;
+                AIOTEK_LOG_INFO("Timer1 callback triggered, id={}, data={}", timer->GetId(), value);
+                // Mailbox* mailbox = aiotek::core::TaskManager::GetMailbox(2);
+                // if (mailbox) {
+                //     MailboxPacket packet;
+                //     packet.sender = timer->GetId();
+                //     packet.receiver = 2;
+                //     packet.msg.signal = timer->GetId();
+                //     packet.msg.msg = "Timer1 triggered with value: " + std::to_string(value);
+                //     packet.msg.len = packet.msg.msg.size();
+                //     mailbox->send(packet);
+                // }
+            },
+            &user_data1
+        );
+        timer1.Start(std::chrono::milliseconds(5000));
+
+        aiotek::core::Timer timer2;
+        int user_data2 = 99;
+        timer2.Initialize(
+            "Timer2", 101, aiotek::core::Timer::TimerType::PERIODIC,
+            std::chrono::milliseconds(1000),
+            [](aiotek::core::Timer* timer, void* data) {
+                int value = *(int*)data;
+                AIOTEK_LOG_INFO("Timer2 callback triggered, id={}, data={}", timer->GetId(), value);
+                // Mailbox* mailbox = aiotek::core::TaskManager::GetMailbox(2);
+                // if (mailbox) {
+                //     MailboxPacket packet;
+                //     packet.sender = timer->GetId();
+                //     packet.receiver = 2;
+                //     packet.msg.signal = timer->GetId();
+                //     packet.msg.msg = "Timer2 triggered with value: " + std::to_string(value);
+                //     packet.msg.len = packet.msg.msg.size();
+                //     mailbox->send(packet);
+                // }
+            },
+            &user_data2
+        );
+        timer2.Start(std::chrono::milliseconds(2000));
+
+        aiotek::core::Timer timer3;
+        int user_data3 = 123;
+        timer3.Initialize(
+            "Timer3", 102, aiotek::core::Timer::TimerType::PERIODIC,
+            std::chrono::milliseconds(3000),
+            [](aiotek::core::Timer* timer, void* data) {
+                int value = *(int*)data;
+                AIOTEK_LOG_INFO("Timer3 callback triggered, id={}, data={}", timer->GetId(), value);
+                // Mailbox* mailbox = aiotek::core::TaskManager::GetMailbox(2);
+                // if (mailbox) {
+                //     MailboxPacket packet;
+                //     packet.sender = timer->GetId();
+                //     packet.receiver = 2;
+                //     packet.msg.signal = timer->GetId();
+                //     packet.msg.msg = "Timer3 triggered with value: " + std::to_string(value);
+                //     packet.msg.len = packet.msg.msg.size();
+                //     mailbox->send(packet);
+                // }
+
+                // if (value == 123) {
+                //     timer->SetPeriod(std::chrono::milliseconds(5000));
+                //     *(int*)data = 456;
+                // } else if (value == 456) {
+                //     timer->Delete();
+                // }
+            },
+            &user_data3
+        );
+        timer3.Start(std::chrono::milliseconds(3000));
+
+        // std::this_thread::sleep_for(std::chrono::milliseconds(2500));
+        // timer2.Pause();
+        // AIOTEK_LOG_INFO("Main: Paused Timer2");
+        // std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+        // timer2.Resume();
+        // AIOTEK_LOG_INFO("Main: Resumed Timer2");
 
         aiotek::app::RegisterAllTask();
-
         task_manager.StartAll();
 
         while (g_running) {

@@ -7,7 +7,7 @@ extern "C" {
 #include <libavutil/timestamp.h>
 #include <libavutil/error.h>
 }
-#include "aiotek_log.hpp"
+#include "aiotek_logger.hpp"
 
 namespace aiotek {
 namespace app {

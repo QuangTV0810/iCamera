@@ -26,6 +26,10 @@ class Task {
     {
         return m_task_id;
     }
+    std::string GetName() const
+    {
+        return m_task_name;
+    }
     Mailbox& GetMailbox()
     {
         return m_mailbox;
@@ -50,6 +54,7 @@ class TaskManager {
     static void SuspendAll();
     static void ResumeAll();
     static Mailbox* GetMailbox(int task_id);
+    static std::vector<std::pair<std::string, int>> GetActiveTasks();
 
   private:
     static std::vector<std::shared_ptr<Task>> m_tasks;

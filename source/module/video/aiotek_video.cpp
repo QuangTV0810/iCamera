@@ -1,5 +1,5 @@
 #include "aiotek_video.hpp"
-#include "utils/aiotek_log.hpp"
+#include "aiotek_logger.hpp"
 #include <chrono>
 
 namespace AIOTEK {

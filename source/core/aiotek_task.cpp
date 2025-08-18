@@ -114,6 +114,20 @@ void TaskManager::ResumeAll()
         task->Resume();
 }
 
+std::vector<std::pair<std::string, int>> TaskManager::GetActiveTasks()
+{
+    std::lock_guard<std::mutex> lock(m_manager_mutex);
+    std::vector<std::pair<std::string, int>> active_tasks;
+    for (const auto& task : m_tasks) {
+        if (task->IsOperation()) {
+            active_tasks.emplace_back(task->GetName(), task->GetId());
+            std::cout << "TaskManager: Active task: name=" << task->GetName() << ", id=" << task->GetId() << std::endl;
+        }
+    }
+    std::cout << "TaskManager: Found " << active_tasks.size() << " active tasks" << std::endl;
+    return active_tasks;
+}
+
 Mailbox* TaskManager::GetMailbox(int task_id)
 {
     std::lock_guard<std::mutex> lock(m_manager_mutex);
