@@ -75,7 +75,7 @@ void GetRTSPTask::Initialize()
         }
 
     } catch (const std::exception& e) {
-        AIOTEK_LOG_ERROR("GetRTSPTask: Initialize failed: ", e.what());
+        AIOTEK_LOG_ERROR("GetRTSPTask: Initialize failed: " << e.what());
         if (m_ifmt_ctx) {
             avformat_close_input(&m_ifmt_ctx);
             m_ifmt_ctx = nullptr;
@@ -134,7 +134,7 @@ void GetRTSPTask::ThreadGetRTSPHandler(aiotek::core::Task& task)
             av_packet_unref(&pkt);
         }
     } catch (const std::exception& e) {
-        AIOTEK_LOG_ERROR("GetRTSPTask: Exception in handler: ", e.what());
+        AIOTEK_LOG_ERROR("GetRTSPTask: Exception in handler: " << e.what());
     }
 }
 

@@ -144,7 +144,7 @@ bool AudioManager::isPlaying() const {
 bool AudioManager::processAudio(const std::vector<uint8_t>& data) {
     if (!initialized) return false;
     
-    AIOTEK_LOG_DEBUG("AudioManager: Processing " + std::to_string(data.size()) + " bytes");
+    AIOTEK_LOG_DEBUG("AudioManager: Processing " << std::to_string(data.size())  << " bytes");
     return true;
 }
 
@@ -155,15 +155,15 @@ std::vector<uint8_t> AudioManager::getAudioData() {
 }
 
 void AudioManager::setSampleRate(int sampleRate) {
-    AIOTEK_LOG_INFO("AudioManager: Setting sample rate to " + std::to_string(sampleRate));
+    AIOTEK_LOG_INFO("AudioManager: Setting sample rate to " << std::to_string(sampleRate));
 }
 
 void AudioManager::setChannels(int channels) {
-    AIOTEK_LOG_INFO("AudioManager: Setting channels to " + std::to_string(channels));
+    AIOTEK_LOG_INFO("AudioManager: Setting channels to " << std::to_string(channels));
 }
 
 void AudioManager::setBitsPerSample(int bitsPerSample) {
-    AIOTEK_LOG_INFO("AudioManager: Setting bits per sample to " + std::to_string(bitsPerSample));
+    AIOTEK_LOG_INFO("AudioManager: Setting bits per sample to " << std::to_string(bitsPerSample));
 }
 
 } // namespace AIOTEK

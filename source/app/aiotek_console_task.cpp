@@ -84,8 +84,6 @@ void ConsoleTask::RegisterConsoleCommands()
 
 void ConsoleTask::ThreadConsoleHandler(aiotek::core::Task& task)
 {
-    std::cout << "ConsoleTask: Thread started, Task ID=" << task.GetId() << std::endl;
-
     this->RegisterConsoleCommands();
     this->Initialize();
     this->Start();
@@ -97,7 +95,7 @@ void ConsoleTask::ThreadConsoleHandler(aiotek::core::Task& task)
                 continue;
             }
 
-            auto packet = task.GetMailbox().receive(std::chrono::milliseconds(500));
+            auto packet = task.GetMailbox().receive(std::chrono::milliseconds(50));
             if (packet) {
                 if (CONSOLE_TASK == packet->task_sender_id) {
                 } else {
@@ -107,8 +105,6 @@ void ConsoleTask::ThreadConsoleHandler(aiotek::core::Task& task)
     } catch (const std::exception& e) {
         std::cout << "ConsoleTask: Exception in handler: " << e.what() << std::endl;
     }
-
-    std::cout << "ConsoleTask: Thread stopped, Task ID=" << task.GetId() << std::endl;
 }
 
 } // namespace app

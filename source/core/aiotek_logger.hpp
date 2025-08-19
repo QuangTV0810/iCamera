@@ -1,8 +1,8 @@
 #pragma once
 
 #include <string>
-#include <sstream>
 #include <mutex>
+#include <sstream>
 
 namespace aiotek {
 namespace core {
@@ -18,52 +18,34 @@ class Logger {
 public:
     static Logger& GetInstance();
 
-    void Log(LogLevel level, const std::string& file, const std::string& func, int line, const std::string& message);
+    void Log(LogLevel level, const std::string& file, int line, const std::string& message);
 
 private:
     Logger() = default;
-    std::string GetFormattedTime() const;
-    std::string GetFileName(const std::string& file) const;
-    std::string GetColorCode(LogLevel level) const;
+    ~Logger() = default;
+    Logger(const Logger&) = delete;
+    Logger& operator=(const Logger&) = delete;
 
     std::mutex m_log_mutex;
+
+    std::string GetFormattedTime() const;
+
+    std::string GetFileName(const std::string& file) const;
+
+    std::string GetColorCode(LogLevel level) const;
 };
 
-#define AIOTEK_LOG(level, format, ...) \
+#define AIOTEK_LOG(level, ...) \
     do { \
         std::stringstream ss; \
-        ss << aiotek::core::format_string(format, ##__VA_ARGS__); \
-        aiotek::core::Logger::GetInstance().Log(level, __FILE__, __func__, __LINE__, ss.str()); \
+        ss << __VA_ARGS__; \
+        aiotek::core::Logger::GetInstance().Log(level, __FILE__, __LINE__, ss.str()); \
     } while (0)
 
-#define AIOTEK_LOG_DEBUG(format, ...) AIOTEK_LOG(aiotek::core::LogLevel::DEBUG, format, ##__VA_ARGS__)
-#define AIOTEK_LOG_INFO(format, ...)  AIOTEK_LOG(aiotek::core::LogLevel::INFO, format, ##__VA_ARGS__)
-#define AIOTEK_LOG_WARN(format, ...)  AIOTEK_LOG(aiotek::core::LogLevel::WARN, format, ##__VA_ARGS__)
-#define AIOTEK_LOG_ERROR(format, ...) AIOTEK_LOG(aiotek::core::LogLevel::ERROR, format, ##__VA_ARGS__)
-
-template<typename... Args>
-std::string format_string(const std::string& format, Args... args) {
-    std::stringstream ss;
-    size_t pos = 0;
-    std::tuple<Args...> arg_tuple(args...);
-    std::string result = format;
-
-    auto replace_next = [&](const auto& value) {
-        size_t found = result.find("{}", pos);
-        if (found != std::string::npos) {
-            std::stringstream val_ss;
-            val_ss << value;
-            result.replace(found, 2, val_ss.str());
-            pos = found + val_ss.str().length();
-        }
-    };
-
-    std::apply([&](const auto&... vals) {
-        (replace_next(vals), ...);
-    }, arg_tuple);
-
-    return result;
-}
+#define AIOTEK_LOG_DEBUG(...) AIOTEK_LOG(aiotek::core::LogLevel::DEBUG, __VA_ARGS__)
+#define AIOTEK_LOG_INFO(...) AIOTEK_LOG(aiotek::core::LogLevel::INFO, __VA_ARGS__)
+#define AIOTEK_LOG_WARN(...) AIOTEK_LOG(aiotek::core::LogLevel::WARN, __VA_ARGS__)
+#define AIOTEK_LOG_ERROR(...) AIOTEK_LOG(aiotek::core::LogLevel::ERROR, __VA_ARGS__)
 
 } // namespace core
 } // namespace aiotek

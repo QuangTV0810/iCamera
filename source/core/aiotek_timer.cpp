@@ -10,7 +10,7 @@ static void LogMemoryUsage(const std::string& prefix)
 {
     struct rusage usage;
     getrusage(RUSAGE_SELF, &usage);
-    AIOTEK_LOG_DEBUG("{}: Memory usage: {} KB", prefix, usage.ru_maxrss);
+    AIOTEK_LOG_DEBUG(prefix << ": Memory usage: " << usage.ru_maxrss << "KB");
 }
 
 Timer::~Timer()
@@ -27,8 +27,9 @@ void Timer::Initialize(const std::string& name, int id, TimerType type, std::chr
     m_callback = callback;
     m_user_data = user_data;
 
-    AIOTEK_LOG_INFO("Timer: Initialized {}, id={}, type={}, period={}ms", name, id, type == TimerType::ONESHOT ? "ONE_SHOT" : "PERIODIC",
-                    period.count());
+    AIOTEK_LOG_INFO("Timer: " << name << "id: " << id << "type: " << (type == TimerType::ONESHOT ? "ONE_SHOT" : "PERIODIC")
+                              << "period: " << period.count() << "ms");
+
     LogMemoryUsage("Timer");
 }
 
@@ -36,7 +37,6 @@ void Timer::Deinitialize()
 {
     Delete();
     Stop();
-    AIOTEK_LOG_INFO("Timer: Deinitialized {}", m_name);
 }
 
 void Timer::Start(std::chrono::milliseconds start_time)
@@ -49,7 +49,7 @@ void Timer::Start(std::chrono::milliseconds start_time)
 
     TimerManager::GetInstance().AddTimer(this);
 
-    AIOTEK_LOG_INFO("Timer: Started {}, id={}, start_time={}ms", m_name, m_id, effective_time.count());
+    AIOTEK_LOG_INFO("Timer: Started " << m_name << "id: " << m_id << "start_time: " << effective_time.count() << "ms");
 }
 
 void Timer::Stop()
@@ -66,20 +66,18 @@ void Timer::Stop()
     TimerManager::GetInstance().RemoveTimer(this);
 
     m_activated = false;
-
-    AIOTEK_LOG_INFO("Timer: Stopped {}, remaining_time={}ms", m_name, m_remaining_time.count());
 }
 
 void Timer::Pause()
 {
     Stop();
-    AIOTEK_LOG_INFO("Timer: Paused {}", m_name);
+    AIOTEK_LOG_INFO("Timer: Paused " << m_name);
 }
 
 void Timer::Resume()
 {
     Start(std::chrono::milliseconds(0));
-    AIOTEK_LOG_INFO("Timer: Resumed {}", m_name);
+    AIOTEK_LOG_INFO("Timer: Resumed " << m_name);
 }
 
 void Timer::SetPeriod(std::chrono::milliseconds new_period)
@@ -90,7 +88,7 @@ void Timer::SetPeriod(std::chrono::milliseconds new_period)
         TimerManager::GetInstance().UpdateDeadline(this, new_period);
     }
 
-    AIOTEK_LOG_INFO("Timer: Set new period for {}, new_period={}ms", m_name, new_period.count());
+    AIOTEK_LOG_INFO("Timer: Set new period for " << m_name << "new_period " << new_period.count() << "ms");
 }
 
 void Timer::Delete()
@@ -102,8 +100,6 @@ void Timer::Delete()
     if (m_callback) {
         m_callback(this, m_user_data);
     }
-
-    AIOTEK_LOG_INFO("Timer: Cancelled {}", m_name);
 }
 
 bool Timer::IsActivated() const
@@ -119,20 +115,17 @@ TimerManager& TimerManager::GetInstance()
 
 TimerManager::TimerManager()
 {
-    m_task = std::make_shared<Task>("TimerManager", 999, [](Task&) {});
-    AIOTEK_LOG_INFO("TimerManager: Initialized");
+    m_task = std::make_shared<Task>("TimerManager", 0, [](Task&) {});
 }
 
 TimerManager::~TimerManager()
 {
     Stop();
-    AIOTEK_LOG_INFO("TimerManager: Deinitialized");
 }
 
 void TimerManager::Start()
 {
     m_task->Start();
-    AIOTEK_LOG_INFO("TimerManager: Started");
 }
 
 void TimerManager::Stop()
@@ -141,7 +134,6 @@ void TimerManager::Stop()
     m_timer_list.clear();
     m_task->Stop();
     m_timer_cond.notify_one();
-    AIOTEK_LOG_INFO("TimerManager: Stopped");
 }
 
 void TimerManager::AddTimer(Timer* timer)
@@ -189,8 +181,6 @@ bool TimerManager::IsTimerInList(const Timer* timer) const
 
 void TimerManager::ThreadTimerHandler(Task& task)
 {
-    AIOTEK_LOG_INFO("TimerManager: Handler started");
-
     while (task.IsOperation()) {
         if (task.IsSuspended()) {
             AIOTEK_LOG_DEBUG("TimerManager: Suspended");
@@ -223,13 +213,7 @@ void TimerManager::ThreadTimerHandler(Task& task)
         } else {
             timer->m_activated = false;
         }
-
-        AIOTEK_LOG_DEBUG("TimerManager: Processed {}, id={}, next_trigger={}ms", timer->m_name, timer->m_id,
-                         timer->m_type == Timer::TimerType::PERIODIC ? timer->m_period.count() : 0);
-        LogMemoryUsage("TimerManager");
     }
-
-    AIOTEK_LOG_INFO("TimerManager: Handler stopped");
 }
 
 } // namespace core

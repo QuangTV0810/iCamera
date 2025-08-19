@@ -1,6 +1,8 @@
-#include "aiotek_task.hpp"
-#include <pthread.h>
+
 #include <iostream>
+#include <pthread.h>
+#include "aiotek_task.hpp"
+#include "aiotek_logger.hpp"
 
 namespace aiotek {
 namespace core {
@@ -77,7 +79,7 @@ void TaskManager::RegisterTask(std::function<void(Task&)> handler, const std::st
 {
     std::lock_guard<std::mutex> lock(GetRegistryMutex());
     GetTaskRegistry().push_back({handler, name, id});
-    std::cout << "Register task: " << name << std::endl;
+    AIOTEK_LOG_INFO("Task: " << name << " created");
 }
 
 void TaskManager::StartAll()
@@ -88,15 +90,18 @@ void TaskManager::StartAll()
         auto task = std::make_shared<Task>(task_info.name, task_info.id, task_info.handler);
         m_tasks.push_back(task);
         task->Start();
-        std::cout << "Task: " << task_info.name << " started" << std::endl;
+        AIOTEK_LOG_INFO("Task: " << task_info.name << " started");
     }
 }
 
 void TaskManager::StopAll()
 {
     std::lock_guard<std::mutex> lock(m_manager_mutex);
-    for (auto& task : m_tasks)
+    for (auto& task : m_tasks) {
         task->Stop();
+        AIOTEK_LOG_INFO("Task: " << task->GetName() << " stoped");
+    }
+
     m_tasks.clear();
 }
 
@@ -121,10 +126,10 @@ std::vector<std::pair<std::string, int>> TaskManager::GetActiveTasks()
     for (const auto& task : m_tasks) {
         if (task->IsOperation()) {
             active_tasks.emplace_back(task->GetName(), task->GetId());
-            std::cout << "TaskManager: Active task: name=" << task->GetName() << ", id=" << task->GetId() << std::endl;
+            AIOTEK_LOG_INFO("Task active: " << task->GetName());
         }
     }
-    std::cout << "TaskManager: Found " << active_tasks.size() << " active tasks" << std::endl;
+    AIOTEK_LOG_INFO("TaskManager: Found " << active_tasks.size() << " active tasks");
     return active_tasks;
 }
 

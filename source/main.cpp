@@ -18,7 +18,8 @@ void signal_handler(int signal)
 {
     std::cout << "Received signal " << signal << ", shutting down..." << std::endl;
     g_running = false;
-    task_manager.StopAll();
+    aiotek::core::TimerManager::GetInstance().Stop();
+    task_manager.StopAll();    
 }
 
 int main()
@@ -26,13 +27,11 @@ int main()
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
 
-    std::cout << "iCamera starting..." << std::endl;
-
     try {
         AIOTEK_LOG_INFO("iCamera application started");
 
         aiotek::core::TimerManager::GetInstance().Start();
-
+/*
         aiotek::core::Timer timer1;
         int user_data1 = 42;
         timer1.Initialize(
@@ -40,7 +39,7 @@ int main()
             std::chrono::milliseconds(5000),
             [](aiotek::core::Timer* timer, void* data) {
                 int value = *(int*)data;
-                AIOTEK_LOG_INFO("Timer1 callback triggered, id={}, data={}", timer->GetId(), value);
+                AIOTEK_LOG_INFO("Timer1 callback triggered" << "id" << timer->GetId() << "data" << value);
                 // Mailbox* mailbox = aiotek::core::TaskManager::GetMailbox(2);
                 // if (mailbox) {
                 //     MailboxPacket packet;
@@ -63,7 +62,7 @@ int main()
             std::chrono::milliseconds(1000),
             [](aiotek::core::Timer* timer, void* data) {
                 int value = *(int*)data;
-                AIOTEK_LOG_INFO("Timer2 callback triggered, id={}, data={}", timer->GetId(), value);
+                AIOTEK_LOG_INFO("Timer2 callback triggered" << "id" << timer->GetId() << "data" << value);
                 // Mailbox* mailbox = aiotek::core::TaskManager::GetMailbox(2);
                 // if (mailbox) {
                 //     MailboxPacket packet;
@@ -86,7 +85,7 @@ int main()
             std::chrono::milliseconds(3000),
             [](aiotek::core::Timer* timer, void* data) {
                 int value = *(int*)data;
-                AIOTEK_LOG_INFO("Timer3 callback triggered, id={}, data={}", timer->GetId(), value);
+                AIOTEK_LOG_INFO("Timer3 callback triggered" << "id" << timer->GetId() << "data" << value);
                 // Mailbox* mailbox = aiotek::core::TaskManager::GetMailbox(2);
                 // if (mailbox) {
                 //     MailboxPacket packet;
@@ -115,7 +114,7 @@ int main()
         // std::this_thread::sleep_for(std::chrono::milliseconds(2000));
         // timer2.Resume();
         // AIOTEK_LOG_INFO("Main: Resumed Timer2");
-
+*/
         aiotek::app::RegisterAllTask();
         task_manager.StartAll();
 
@@ -127,10 +126,9 @@ int main()
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
-        AIOTEK_LOG_ERROR("Application error: " + std::string(e.what()));
+        AIOTEK_LOG_ERROR("Application error: " << std::string(e.what()));
         return 1;
     }
 
-    std::cout << "iCamera stopped" << std::endl;
     return 0;
 }

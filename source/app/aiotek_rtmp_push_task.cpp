@@ -1,11 +1,14 @@
-#include "aiotek_rtmp_push_task.hpp"
 #include <chrono>
 #include <thread>
 #include <stdexcept>
 #include <iostream>
 #include <sys/resource.h>
+
 #include "aiotek_task_list.hpp"
+#include "aiotek_logger.hpp"
 #include "aiotek_def.hpp"
+#include "aiotek_rtmp_push_task.hpp"
+
 namespace aiotek {
 namespace app {
 
@@ -108,11 +111,7 @@ void PushRTMPTask::Stop()
 
 void PushRTMPTask::ThreadPushRTMPHandler(aiotek::core::Task& task)
 {
-    std::cout << "PushRTMPTask: Thread started, Task ID=" << task.GetId() << std::endl;
-    std::cout << "TASK_PUS_MEDIA is start" << std::endl;
-
     auto media_ring_buffer = aiotek::core::RingBufferManager::GetInstance().GetRingBuffer("push_media_to_zlm");
-
     try {
         while (task.IsOperation()) {
             if (task.IsSuspended()) {
@@ -124,16 +123,14 @@ void PushRTMPTask::ThreadPushRTMPHandler(aiotek::core::Task& task)
             if (packet) {
                 if (RTSP_TASK == packet->task_sender_id) {
                     auto sig = static_cast<aiotek::common::RTMPSignal>(packet->signal);
+                    AIOTEK_LOG_INFO("Task: " << task.GetName() << " received mailbox from: " << packet->task_sender_id);
                     switch (sig) {
                         case aiotek::common::RTMPSignal::RTSP_INIT_SUCCUSS_SIG: {
                             m_ifmt_ctx = std::any_cast<AVFormatContext*>(packet->msg);
                             if (m_ifmt_ctx && m_ifmt_ctx->nb_streams > 0) {
-                                std::cout << "PushRTMPTask: Received valid m_ifmt_ctx with " << m_ifmt_ctx->nb_streams << " streams from RTSP_TASK "
-                                          << std::endl;
                                 this->Initialize();
                                 this->Start();
                             } else {
-                                std::cout << "PushRTMPTask: Received invalid m_ifmt_ctx or no streams" << std::endl;
                             }
                             break;
                         }
@@ -214,8 +211,6 @@ void PushRTMPTask::ThreadPushRTMPHandler(aiotek::core::Task& task)
     } catch (const std::exception& e) {
         std::cout << "PushRTMPTask: Exception in handler: " << e.what() << std::endl;
     }
-
-    std::cout << "PushRTMPTask: Thread stopped, Task ID=" << task.GetId() << std::endl;
 }
 
 } // namespace app

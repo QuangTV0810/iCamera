@@ -1,7 +1,7 @@
 #include "aiotek_logger.hpp"
-#include <chrono>
-#include <iomanip>
 #include <iostream>
+#include <iomanip>
+#include <chrono>
 #include <sys/resource.h>
 
 namespace aiotek {
@@ -38,26 +38,15 @@ std::string Logger::GetColorCode(LogLevel level) const {
     }
 }
 
-void Logger::Log(LogLevel level, const std::string& file, const std::string& func, int line, const std::string& message) {
+void Logger::Log(LogLevel level, const std::string& file, int line, const std::string& message) {
     std::lock_guard<std::mutex> lock(m_log_mutex);
 
     std::stringstream ss;
-    ss << "[" << GetFormattedTime() << "][" << GetFileName(file) << "][" << func << "][" << line << "]: " << message;
+    ss << "[" << GetFormattedTime() << "][" << GetFileName(file) << "][" << line << "]: " << message;
 
     std::cout << GetColorCode(level) << ss.str() << "\033[0m" << std::endl;
-
-    struct rusage usage;
-    getrusage(RUSAGE_SELF, &usage);
-    if (level == LogLevel::ERROR) {
-        std::cout << GetColorCode(level) << "[Memory usage: " << usage.ru_maxrss << " KB]" << "\033[0m" << std::endl;
-    }
 }
-
-template std::string format_string(const std::string&, const std::string&, int, const char*, long);
-template std::string format_string(const std::string&, const std::string&);
-template std::string format_string(const std::string&, const std::string&, int);
-template std::string format_string(const std::string&, const std::string&, int, long);
-template std::string format_string(const std::string&, const std::string&, long);
 
 } // namespace core
 } // namespace aiotek
+#

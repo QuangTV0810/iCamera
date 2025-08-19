@@ -1,4 +1,5 @@
 #include "aiotek_console.hpp"
+#include "aiotek_logger.hpp"
 
 namespace aiotek {
 namespace console {
@@ -14,9 +15,7 @@ Console::~Console()
 
 void Console::init()
 {
-    std::cout << "======= AIOTEK Console Initializing... =======" << std::endl;
     initializeDefaultCommands();
-    std::cout << "Default commands registered. Console ready." << std::endl;
 }
 
 void Console::deinit()
@@ -25,7 +24,6 @@ void Console::deinit()
     m_commands.clear();
     m_categories.clear();
     m_text_commands.clear();
-    std::cout << "Console deinitialized." << std::endl;
 }
 
 void Console::start()
@@ -36,7 +34,7 @@ void Console::start()
     }
     m_is_console_thread_running.store(true);
     m_console_thread = std::thread(&Console::threadConsole, this);
-    std::cout << "Console started. Type 'help' or 'menu' for options." << std::endl;
+    std::cout << "\nConsole started. Type 'help' or 'menu' for options." << std::endl;
 }
 
 void Console::stop()
@@ -44,13 +42,12 @@ void Console::stop()
     if (!m_is_console_thread_running.load()) {
         return;
     }
-    std::cout << "Stopping console thread..." << std::endl;
     m_is_console_thread_running.store(false);
 
     if (m_console_thread.joinable()) {
         m_console_thread.join();
     }
-    std::cout << "Console thread stopped." << std::endl;
+    AIOTEK_LOG_INFO("Console thread stopped.");
 }
 
 bool Console::isRunning() const
@@ -60,7 +57,6 @@ bool Console::isRunning() const
 
 void Console::threadConsole()
 {
-    help();
     while (m_is_console_thread_running.load()) {
         
         getCmd();
@@ -173,7 +169,6 @@ void Console::clearCategory(const std::string& category)
 
 void Console::initializeDefaultCommands()
 {
-    // Text commands
     m_text_commands["help"] = [this]() { this->help(); };
     m_text_commands["h"] = [this]() { this->help(); };
     m_text_commands["menu"] = [this]() { this->help(); };
@@ -191,8 +186,6 @@ void Console::initializeDefaultCommands()
         (void) args;
         m_is_console_thread_running.store(false);
     });
-
-    std::cout << "Default menu commands (using the new handler signature)." << std::endl;
 }
 
 void Console::help()

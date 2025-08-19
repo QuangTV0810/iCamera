@@ -15,8 +15,8 @@ public:
     DummyVideoDevice() : initialized(false), capturing(false), frameCounter(0) {}
     
     bool initialize(const VideoConfig& cfg) override {
-        AIOTEK_LOG_INFO("DummyVideoDevice: Initializing with " + 
-                       std::to_string(cfg.width) + "x" + std::to_string(cfg.height));
+        AIOTEK_LOG_INFO("DummyVideoDevice: Initializing with " << 
+                       std::to_string(cfg.width) << "x" << std::to_string(cfg.height));
         config = cfg;
         initialized = true;
         return true;
@@ -170,8 +170,8 @@ bool VideoManager::setConfig(const VideoConfig& cfg) {
 bool VideoManager::processFrame(const VideoFrame& frame) {
     if (!initialized) return false;
     
-    AIOTEK_LOG_DEBUG("VideoManager: Processing frame " + 
-                    std::to_string(frame.width) + "x" + std::to_string(frame.height));
+    AIOTEK_LOG_DEBUG("VideoManager: Processing frame " << 
+                    std::to_string(frame.width) << "x" << std::to_string(frame.height));
     
     if (frameCallback) {
         frameCallback(frame);
