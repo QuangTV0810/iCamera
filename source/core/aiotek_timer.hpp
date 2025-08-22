@@ -20,7 +20,7 @@ class Timer {
     Timer() = default;
     ~Timer();
 
-    void Initialize(const std::string& name, int id, TimerType type, std::chrono::milliseconds period, TimerCallback callback, void* user_data);
+    void Initialize(const std::string& name, TimerType type, std::chrono::milliseconds period, TimerCallback callback, void* user_data);
 
     void Deinitialize();
 
@@ -42,10 +42,6 @@ class Timer {
     {
         return m_name;
     }
-    int GetId() const
-    {
-        return m_id;
-    }
 
   private:
     friend class TimerManager;
@@ -58,7 +54,6 @@ class Timer {
     void* m_user_data;
     bool m_activated{false};
     std::string m_name;
-    int m_id;
 };
 
 class TimerManager {

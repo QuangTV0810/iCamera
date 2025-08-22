@@ -18,16 +18,15 @@ Timer::~Timer()
     Deinitialize();
 }
 
-void Timer::Initialize(const std::string& name, int id, TimerType type, std::chrono::milliseconds period, TimerCallback callback, void* user_data)
+void Timer::Initialize(const std::string& name, TimerType type, std::chrono::milliseconds period, TimerCallback callback, void* user_data)
 {
     m_name = name;
-    m_id = id;
     m_type = type;
     m_period = period;
     m_callback = callback;
     m_user_data = user_data;
 
-    AIOTEK_LOG_INFO("Timer: " << name << "id: " << id << "type: " << (type == TimerType::ONESHOT ? "ONE_SHOT" : "PERIODIC")
+    AIOTEK_LOG_INFO("Timer: " << name << "type: " << (type == TimerType::ONESHOT ? "ONE_SHOT" : "PERIODIC")
                               << "period: " << period.count() << "ms");
 
     LogMemoryUsage("Timer");
@@ -49,7 +48,7 @@ void Timer::Start(std::chrono::milliseconds start_time)
 
     TimerManager::GetInstance().AddTimer(this);
 
-    AIOTEK_LOG_INFO("Timer: Started " << m_name << "id: " << m_id << "start_time: " << effective_time.count() << "ms");
+    AIOTEK_LOG_INFO("Timer: Started " << m_name << "start_time: " << effective_time.count() << "ms");
 }
 
 void Timer::Stop()
