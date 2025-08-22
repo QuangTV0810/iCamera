@@ -67,7 +67,6 @@ void GetRTSPTask::Initialize()
             bool status = rtmp_mailbox->send(packet);
             if (status) {
                 AIOTEK_LOG_INFO("GetRTSPTask: Sent m_ifmt_ctx to RTMP_TASK");
-                std::cout << "GetRTSPTask: Sent m_ifmt_ctx to RTMP_TASK" << std::endl;
             } else {
                 AIOTEK_LOG_ERROR("GetRTSPTask: Failed to send m_ifmt_ctx to RTMP_TASK");
             }
@@ -76,7 +75,7 @@ void GetRTSPTask::Initialize()
         }
 
     } catch (const std::exception& e) {
-        std::cout << "GetRTSPTask: Initialize failed: " << e.what() << std::endl;
+        AIOTEK_LOG_ERROR("GetRTSPTask: Initialize failed: " << e.what());
         if (m_ifmt_ctx) {
             avformat_close_input(&m_ifmt_ctx);
             m_ifmt_ctx = nullptr;
@@ -96,15 +95,14 @@ void GetRTSPTask::Deinitialize()
 
 void GetRTSPTask::ThreadGetRTSPHandler(aiotek::core::Task& task)
 {
-    std::cout << "GetRTSPTask: Thread started, Task ID=" << task.GetId() << std::endl;
     try {
         if (!m_ifmt_ctx || m_ifmt_ctx->nb_streams == 0) {
-            std::cout << "GetRTSPTask: m_ifmt_ctx is null or has no streams" << std::endl;
+            AIOTEK_LOG_ERROR( "GetRTSPTask: m_ifmt_ctx is null or has no streams");
             return;
         }
         auto media_ring_buffer = aiotek::core::RingBufferManager::GetInstance().GetRingBuffer("push_media_to_zlm");
         if (!media_ring_buffer) {
-            std::cout << "GetRTSPTask: cannot get media_ring_buffer" << std::endl;
+            AIOTEK_LOG_ERROR("GetRTSPTask: cannot get media_ring_buffer");
             return;
         }
 
@@ -131,16 +129,13 @@ void GetRTSPTask::ThreadGetRTSPHandler(aiotek::core::Task& task)
             }
 
             if (media_ring_buffer->push(pkt)) {
-                // std::cout << "[RTSP] Got packet from stream index: " << pkt.stream_index << " size: " << pkt.size << std::endl;
             } else {
             }
             av_packet_unref(&pkt);
         }
     } catch (const std::exception& e) {
-        std::cout << "GetRTSPTask: Exception in handler: " << e.what() << std::endl;
+        AIOTEK_LOG_ERROR("GetRTSPTask: Exception in handler: " << e.what());
     }
-
-    std::cout << "GetRTSPTask: Thread stopped, Task ID=" << task.GetId() << std::endl;
 }
 
 } // namespace app
