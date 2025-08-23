@@ -88,6 +88,7 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/source/module/stream/rtsp
     ${CMAKE_SOURCE_DIR}/source/module/stream/rtmp
     ${CMAKE_SOURCE_DIR}/source/module/console
+    ~/workspace/camera/rockchip/sdk/luckfox-pico/media/out/include
 )
 
 # Find required packages
@@ -97,6 +98,7 @@ find_package(Threads REQUIRED)
 link_directories(
     ${CMAKE_SOURCE_DIR}/lib
     ~/workspace/camera/rockchip/sdk/luckfox-pico/sysdrv/source/buildroot/buildroot-2023.02.6/output/target/usr/lib
+    ~/workspace/camera/rockchip/sdk/luckfox-pico/media/out/lib
 )
 
 # Source files
@@ -137,6 +139,9 @@ target_link_libraries(${PROJECT_NAME}
     avutil
     avdevice
     swresample
+    rockit
+    rockchip_mpp
+    rga
     ${CMAKE_THREAD_LIBS_INIT}
 )
 
