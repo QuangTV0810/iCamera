@@ -4,6 +4,7 @@ namespace aiotek {
 namespace app {
 enum TaskID : int {
     TIMER_TASK,
+    VIDEO_TASK,
     MQTT_TASK,
     RTSP_TASK,
     RTMP_TASK,

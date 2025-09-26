@@ -14,32 +14,29 @@ static void* ThreadVideoHandler(void* arg)
     int loop_count = 0;
 
     while (handler->is_running) {
-        RK_S32 ret = RK_MPI_VENC_GetStream(handler->venc_chn, &handler->stream, 1000);
+        RK_S32 ret = RK_MPI_VENC_GetStream(handler->venc_chn, &handler->stream, -1);
         if (ret != RK_SUCCESS) {
             RK_LOGE("VideoCapture: RK_MPI_VENC_GetStream failed: %d", ret);
-            pthread_mutex_lock(&handler->mutex);
-
-            pthread_mutex_unlock(&handler->mutex);
-            usleep(5000000);
             continue;
         }
 
-        pthread_mutex_lock(&handler->mutex);
         if (handler->callback) {
             void* data = RK_MPI_MB_Handle2VirAddr(handler->stream.pstPack->pMbBlk);
             handler->callback(data, handler->stream.pstPack->u32Len, handler->stream.pstPack->u64PTS, handler->user_data);
         }
-        pthread_mutex_unlock(&handler->mutex);
 
-        RK_U64 now_us = TEST_COMM_GetNowUs();
-        RK_LOGD("VideoCapture: chn:%d, loopCount:%d, seq:%d, len:%d, pts:%lld, delay:%lldus", handler->venc_chn, loop_count, handler->stream.u32Seq,
-                handler->stream.pstPack->u32Len, handler->stream.pstPack->u64PTS, now_us - handler->stream.pstPack->u64PTS);
+        // RK_U64 now_us = TEST_COMM_GetNowUs();
+        // RK_LOGI("VideoCapture: chn:%d, loopCount:%d, seq:%d, len:%d, pts:%lld, delay:%lldus", handler->venc_chn, loop_count,
+        // handler->stream.u32Seq,
+        //         handler->stream.pstPack->u32Len, handler->stream.pstPack->u64PTS, now_us - handler->stream.pstPack->u64PTS);
 
         ret = RK_MPI_VENC_ReleaseStream(handler->venc_chn, &handler->stream);
         if (ret != RK_SUCCESS) {
             RK_LOGE("VideoCapture: RK_MPI_VENC_ReleaseStream failed: %d", ret);
         }
         loop_count++;
+
+        usleep(10 * 1000);
     }
 
     RK_LOGI("VideoCapture: ThreadVideoHandler stopped");
@@ -133,7 +130,7 @@ void VideoCapture_Initialize(VideoCapture_t* handler)
     chn_attr.stSize.u32Height = handler->config.height;
     chn_attr.enPixelFormat = RK_FMT_YUV420SP;
     chn_attr.enCompressMode = COMPRESS_MODE_NONE;
-    chn_attr.u32Depth = 0;
+    chn_attr.u32Depth = 1;
     ret = RK_MPI_VI_SetChnAttr(handler->vi_dev, handler->vi_chn, &chn_attr);
     if (ret != RK_SUCCESS) {
         RK_LOGE("VideoCapture: RK_MPI_VI_SetChnAttr failed: %d", ret);
@@ -150,11 +147,12 @@ void VideoCapture_Initialize(VideoCapture_t* handler)
         venc_attr.stVencAttr.u32Profile = H264E_PROFILE_HIGH;
         venc_attr.stRcAttr.enRcMode = VENC_RC_MODE_H264CBR;
         venc_attr.stRcAttr.stH264Cbr.u32BitRate = 10 * 1024;
-        venc_attr.stRcAttr.stH264Cbr.u32Gop = 60;
+        venc_attr.stRcAttr.stH264Cbr.u32Gop = 1;
+        
     } else if (handler->config.codec == RK_VIDEO_ID_HEVC) {
         venc_attr.stRcAttr.enRcMode = VENC_RC_MODE_H265CBR;
         venc_attr.stRcAttr.stH265Cbr.u32BitRate = 10 * 1024;
-        venc_attr.stRcAttr.stH265Cbr.u32Gop = 60;
+        venc_attr.stRcAttr.stH265Cbr.u32Gop = 1;
     } else if (handler->config.codec == RK_VIDEO_ID_MJPEG) {
         venc_attr.stRcAttr.enRcMode = VENC_RC_MODE_MJPEGCBR;
         venc_attr.stRcAttr.stMjpegCbr.u32BitRate = 10 * 1024;
@@ -187,23 +185,9 @@ void VideoCapture_Initialize(VideoCapture_t* handler)
 void VideoCapture_Deinitialize(VideoCapture_t* handler)
 {
     RK_LOGI("VideoCapture: Deinitializing");
-    VideoCapture_Stop(handler);
-    RK_S32 ret = RK_MPI_VI_DisableChn(handler->vi_dev, handler->vi_chn);
-    if (ret != RK_SUCCESS) {
-        RK_LOGE("VideoCapture: RK_MPI_VI_DisableChn failed: %d", ret);
-    }
-    ret = RK_MPI_VENC_DestroyChn(handler->venc_chn);
-    if (ret != RK_SUCCESS) {
-        RK_LOGE("VideoCapture: RK_MPI_VENC_DestroyChn failed: %d", ret);
-    }
-    ret = RK_MPI_VI_DisableDev(handler->vi_dev);
-    if (ret != RK_SUCCESS) {
-        RK_LOGE("VideoCapture: RK_MPI_VI_DisableDev failed: %d", ret);
-    }
-    ret = RK_MPI_SYS_Exit();
-    if (ret != RK_SUCCESS) {
-        RK_LOGE("VideoCapture: RK_MPI_SYS_Exit failed: %d", ret);
-    }
+    if (!handler)
+        return;
+
     if (handler->stream.pstPack) {
         free(handler->stream.pstPack);
         handler->stream.pstPack = NULL;
@@ -264,9 +248,9 @@ void VideoCapture_Stop(VideoCapture_t* handler)
         return;
     }
     handler->is_running = false;
-    pthread_mutex_lock(&handler->mutex);
-    pthread_mutex_unlock(&handler->mutex);
+
     pthread_join(handler->thread, NULL);
+
     MPP_CHN_S src_chn, dest_chn;
     src_chn.enModId = RK_ID_VI;
     src_chn.s32DevId = handler->vi_dev;
@@ -274,27 +258,35 @@ void VideoCapture_Stop(VideoCapture_t* handler)
     dest_chn.enModId = RK_ID_VENC;
     dest_chn.s32DevId = 0;
     dest_chn.s32ChnId = handler->venc_chn;
+
     RK_S32 ret = RK_MPI_SYS_UnBind(&src_chn, &dest_chn);
     if (ret != RK_SUCCESS) {
         RK_LOGE("VideoCapture: RK_MPI_SYS_UnBind failed: %d", ret);
+    } else {
+        RK_LOGI("Unbind VI and VENC success");
     }
-    ret = RK_MPI_VI_DisableChn(handler->vi_dev, handler->vi_chn);
-    if (ret != RK_SUCCESS) {
-        RK_LOGE("VideoCapture: RK_MPI_VI_DisableChn failed: %d", ret);
-    }
+
     ret = RK_MPI_VENC_StopRecvFrame(handler->venc_chn);
     if (ret != RK_SUCCESS) {
         RK_LOGE("VideoCapture: RK_MPI_VENC_StopRecvFrame failed: %d", ret);
     }
+    ret = RK_MPI_VENC_DestroyChn(handler->venc_chn);
+    if (ret != RK_SUCCESS) {
+        RK_LOGE("VideoCapture: RK_MPI_VENC_DestroyChn failed: %d", ret);
+    }
+
+    ret = RK_MPI_VI_DisableChn(handler->vi_dev, handler->vi_chn);
+    if (ret != RK_SUCCESS) {
+        RK_LOGE("VideoCapture: RK_MPI_VI_DisableChn failed: %d", ret);
+    }
+
     RK_LOGI("VideoCapture: Stopped");
 }
 
 void VideoCapture_RegisterCallbackVideo(VideoCapture_t* handler, VideoCallback callback, void* user_data)
 {
-    pthread_mutex_lock(&handler->mutex);
     handler->callback = callback;
     handler->user_data = user_data;
-    pthread_mutex_unlock(&handler->mutex);
     RK_LOGI("VideoCapture: Callback registered");
 }
 

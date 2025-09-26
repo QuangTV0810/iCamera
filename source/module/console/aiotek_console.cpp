@@ -47,7 +47,6 @@ void Console::stop()
     if (m_console_thread.joinable()) {
         m_console_thread.join();
     }
-    AIOTEK_LOG_INFO("Console thread stopped.");
 }
 
 bool Console::isRunning() const
